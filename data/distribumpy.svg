@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  DistriBumpy, which is shown as Store: a shopping bag.
+
+  Drawn in the shell's own glyph language rather than as a badge with a
+  background — the same 32-unit field, the same bead-and-holes construction,
+  and the same one colour. See LineXinBar's crates/lxb-desktop/src/glyphs,
+  where the language is set out: a glyph is one white body, and everything
+  inside it is an opening cut through that body rather than a mark laid on top.
+
+  The handle is a second body lying behind the bag, so a crevice is cut where
+  the two meet: what says the handle passes *behind* the bag is the seam along
+  the bag's top edge, which the field would otherwise close into one shape.
+
+  It is white and nothing else, which is what was asked for. That reads on the
+  shell, whose panels are dark; on a desktop that puts application icons on a
+  light ground it will want the panel behind it to be dark too.
+-->
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <!-- The bag: a flat top, sides flaring a little to the floor, and the
+         two bottom corners taken off so it sits rather than digs in. -->
+    <path id="bag" d="M6.9 12.4h18.2a1.9 1.9 0 0 1 1.87 2.24l-1.35 10.9a3.2 3.2 0 0 1-3.2 2.86H9.58a3.2 3.2 0 0 1-3.2-2.86l-1.35-10.9A1.9 1.9 0 0 1 6.9 12.4z"/>
+
+    <!-- The handle, which starts inside the bag and rises out of it. -->
+    <path id="handle" d="M11 15.6V10.4a5 5 0 0 1 10 0v5.2"
+          fill="none" stroke-width="3" stroke-linecap="round"/>
+
+    <g id="bead"><use href="#handle" stroke="#ffffff"/><use href="#bag"/></g>
+
+    <mask id="pierced">
+      <use href="#bead" fill="#ffffff"/>
+      <!-- The crevice: the bag's own outline in black, then the bag laid back
+           over it, so only the seam where the handle meets it is left open. -->
+      <use href="#bag" fill="#000000" stroke="#000000" stroke-width="1.7" stroke-linejoin="round"/>
+      <use href="#bag" fill="#ffffff"/>
+    </mask>
+  </defs>
+
+  <g mask="url(#pierced)">
+    <use href="#bead" fill="#ffffff"/>
+  </g>
+</svg>

@@ -1,0 +1,82 @@
+[package]
+name = "distribumpy"
+version = "0.9.0"
+edition = "2021"
+rust-version = "1.87"
+license = "GPL-3.0-only"
+description = "A Flatpak store in the LineXinBar design language"
+repository = "https://github.com/Petexy/distribumpy"
+
+[workspace]
+
+[dependencies]
+# The design language, the window, the frame loop, the controllers and the
+# sounds.
+#
+# The path is where the `lxb-toolkit` package puts the crate sources a project
+# built against it compiles from. **0.3.10 or newer**: `Ui::picture` and
+# `Page::typed` arrived in 0.3.0 — a store is mostly pictures, and it has a
+# search field — 0.3.1 is where `Page::taking_text` began to be in force at the
+# moment a key arrives rather than only while a frame is being drawn, which is
+# what makes that field take a letter at all, and 0.3.2 is where `Ui::written`
+# and `Ui::cut_between` arrived, which is what lets a list of cards end at an
+# edge instead of at the last whole card. 0.3.3 adds `Page::scrolls` and
+# `Ui::soften_vertical_edges`, so the pane under a wheel can move and the cards
+# can blur into a real soft boundary. Against an older one cargo refuses the
+# version outright rather than failing to find a method, which is clearer.
+# 0.3.4 is where a dialog began to frost the page it covers, which is what
+# makes `Page::ask` readable over a detail page: a store's pages are mostly
+# other people's screenshots, and a confirmation's words were sitting on one.
+# 0.3.5 is where that frost reached under the dialog rather than round it, and
+# where the stain behind it became strong enough to darken a light screenshot;
+# on 0.3.4 this page's own prompt is still unreadable, which is why the
+# requirement moved rather than staying where it was. 0.3.6 writes a dialog's
+# body in white ink quieted by its alpha instead of in the accent's pale cast,
+# which is the difference between a readable sentence and half of one wherever
+# a bright screenshot shows through the pane. 0.3.7 adds `Page::light_at` and
+# `Page::menu_marked`, which is what the Sort menu on a shelf is built from:
+# every control on these pages is laid out here rather than by `Page`, so
+# without the first a menu grew out of the corner of the window, and without
+# the second it could not say which order the listing is already in. 0.3.8 is
+# where a context menu frosts what is under its own pane: on a page that is a
+# grid of icons and screenshots, its rows were being read over whatever was
+# beneath them. 0.3.9 is where Escape began reaching a page that steers itself
+# rather than closing the window under it — without which nothing here could
+# be got back out of — and where that frost stopped reaching outside the pane
+# it is for. 0.3.10 carries the language's plus, which is what the row that
+# adds a repository wears: an application cannot author a mark of its own, so
+# a plus this store drew itself was flat where every mark beside it is a bead
+# of water and could not answer `theme-icons` at all. 0.3.11 is a touchscreen
+# and a bar: `WindowEvent::Touch` reaches a page at all — a finger could
+# neither press anything here nor move a list — and `Ui::scroll_bar` with
+# `Page::dragging` is what lets a mouse take hold of a list that a controller
+# walks with the light.
+#
+# 0.9.0 is that same release under a different number: the shell, the toolkit,
+# the greeter and this store were lined up on one version, and the API, the ABI
+# and the payload did not move. It is required rather than 0.3.11 because a
+# caret requirement on a 0.x version pins the minor, so ^0.3.11 does not match
+# 0.9.0 and cargo would refuse the toolkit that is actually installed.
+lxb-app = { version = "0.9.0", path = "/usr/share/lxb-toolkit/crates/lxb-app" }
+
+# Flatpak itself. The bindings over the same libflatpak the `flatpak` command
+# is a front end for, which is what makes a real transaction — resolved
+# dependencies, progress per operation, and a cancel that works — available at
+# all. See `src/flatpak.rs` for the one rule that matters: nothing here sends a
+# GObject to another thread.
+libflatpak = "0.7"
+glib = "0.21"
+
+# The catalogue. Flathub's is 47 MB of XML, so it is read as a stream and never
+# held as a document.
+quick-xml = "0.41"
+
+# Screenshots, which are the one part of a listing that is not already on this
+# disk. `rustls` rather than the system OpenSSL, so a machine with no desktop
+# still has a working certificate store.
+ureq = { version = "3", default-features = false, features = ["rustls"] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1

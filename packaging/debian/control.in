@@ -1,0 +1,32 @@
+Package: distribumpy
+Version: @VERSION@-1
+Architecture: @ARCH@
+Maintainer: Piotr Lewandowski <piotr.petexy@gmail.com>
+Section: admin
+Priority: optional
+Depends: @SHLIB_DEPENDS@, flatpak, libxkbcommon0, libegl1
+Recommends: xdg-utils
+Suggests: libvulkan1
+Installed-Size: @INSTALLED_SIZE@
+Homepage: https://github.com/Petexy/distribumpy
+Description: a Flatpak store in the LineXinBar design language
+ Shown as Software Hub. It installs, updates and removes Flatpak applications
+ through libflatpak — the same library the flatpak command is a front end for
+ — so a transaction here is the transaction that command would have run:
+ resolved dependencies, progress operation by operation, and a cancel that
+ works.
+ .
+ It reads the AppStream catalogue every remote already keeps on the disk, so a
+ machine that has been updated once can be browsed with the network unplugged.
+ New applications are installed for the current user by default, which needs no
+ password; anything already installed for the whole system is listed, updated
+ and removed as readily.
+ .
+ It is an ordinary Wayland application, drawn in the LineXinBar design language
+ and driven from a keyboard, a pointer, a touchscreen and a controller at once.
+ It runs under GNOME or Plasma as readily as under the shell it was made for.
+ .
+ libxkbcommon0 and libegl1 are named here because they are opened by name at
+ run time rather than linked, so nothing that reads the executable can find
+ them. libvulkan1 is only suggested: with a Vulkan driver present this draws
+ through it, and without one it falls back to EGL.

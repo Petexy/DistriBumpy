@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Software Hub
+GenericName=Software Store
+Comment=Install, update and remove Flatpak applications and games
+Exec=distribumpy
+Icon=distribumpy
+Terminal=false
+Categories=System;PackageManager;
+Keywords=flatpak;flathub;software;install;store;applications;apps;update;lxb;
+StartupNotify=true
+StartupWMClass=distribumpy
+X-GNOME-SingleWindow=true

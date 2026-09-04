@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.petexy.distribumpy</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+
+  <name>Software Hub</name>
+  <summary>Install, update and remove Flatpak applications and games</summary>
+
+  <description>
+    <p>
+      DistriBumpy is a Flatpak store drawn in the LineXinBar design language:
+      the same colours, glass, motion and marks as the shell it was made for,
+      and driven from a keyboard, a pointer and a controller at once.
+    </p>
+    <p>
+      It reads the catalogue every remote already keeps on the disk, so a
+      machine that has been updated once can be browsed with the network
+      unplugged. New applications are installed for the current user by
+      default, which needs no password; anything already installed for the
+      whole system is listed, updated and removed as readily.
+    </p>
+    <p>
+      It opens on a Home page of what Flathub says is worth looking at — what is
+      asked for most, what is rising fastest, and what has just been published
+      or rebuilt — and everything on offer is shown as a card in a grid that
+      narrows with the window.
+    </p>
+    <p>
+      It shows what an install would really cost before the press, what changed
+      in each release, and what each application may reach outside its sandbox
+      — with a switch for every permission worth switching, written to this
+      user's own override so that nothing needs a password. Repositories can be
+      added, switched off, refreshed and forgotten from the same pages.
+    </p>
+    <p>It is an ordinary Wayland application and runs on any desktop.</p>
+  </description>
+
+  <launchable type="desktop-id">distribumpy.desktop</launchable>
+  <provides>
+    <binary>distribumpy</binary>
+  </provides>
+
+  <categories>
+    <category>System</category>
+    <category>PackageManager</category>
+  </categories>
+
+  <developer id="io.github.petexy">
+    <name>Piotr Lewandowski</name>
+  </developer>
+
+  <url type="homepage">https://github.com/Petexy/distribumpy</url>
+  <url type="bugtracker">https://github.com/Petexy/distribumpy/issues</url>
+
+  <content_rating type="oars-1.1"/>
+
+  <releases>
+    <release version="0.9.0" type="development" date="2026-08-30">
+      <description>
+        <p>
+          Shown as Software Hub. It was called Store, which names a category
+          rather than a thing.
+        </p>
+        <p>
+          Updating everything now carries on past an operation that will not go
+          and names it, instead of stopping and calling it a cancellation; the
+          runtimes and extensions an application stands on are listed and
+          updated with it; and nothing claims a password will be asked for
+          where none is.
+        </p>
+        <p>
+          A finger moves a list, a scroll bar is there for the hand that is not
+          on a controller, and the application page carries its facts beside
+          the name.
+        </p>
+        <p>
+          This release shares its version with LineXinBar, lxb-toolkit and
+          CEDM.
+        </p>
+      </description>
+    </release>
+    <release version="0.1.0" type="development" date="2026-08-28"/>
+  </releases>
+</component>

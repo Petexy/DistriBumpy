@@ -1,0 +1,17 @@
+Source: distribumpy
+Section: admin
+Priority: optional
+Maintainer: Piotr Lewandowski <piotr.petexy@gmail.com>
+Build-Depends: debhelper-compat (= 13),
+               cargo,
+               rustc (>= 1.87),
+               pkg-config,
+               libflatpak-dev,
+               libglib2.0-dev,
+               lxb-toolkit-dev (>= @TOOLKIT_VERSION@)
+Standards-Version: 4.7.4
+Rules-Requires-Root: no
+
+Package: distribumpy
+Architecture: linux-any
+Description: a Flatpak store in the LineXinBar design language
