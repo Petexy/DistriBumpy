@@ -239,14 +239,14 @@ fn header(
     let developer = listing
         .map(|one| one.developer.clone())
         .filter(|said| !said.is_empty())
-        .map(|said| format!("By {said}"));
+        .map(|said| crate::message!("by-publisher", "publisher" => (said).to_string()));
     let summary = listing
         .map(|one| one.summary.clone())
         .or_else(|| installed.map(|one| one.name.clone()))
         .unwrap_or_default();
     let mut facts = facts_of(store, listing, installed);
     if verified {
-        facts.insert(0, Fact::accented("Verified publisher"));
+        facts.insert(0, Fact::accented(crate::i18n::text("verified-publisher")));
     }
     let eol = installed.and_then(|one| one.eol.clone());
 
@@ -387,7 +387,7 @@ fn header(
     // Under both columns whichever way they came out: this is a warning about
     // the application, not one more fact about it.
     if let Some(said) = eol {
-        let warning = format!("No longer updated. {said}");
+        let warning = crate::message!("no-longer-updated-by", "publisher" => (said).to_string());
         let mut lines = page.ui().wrap(Text::Caption, &warning, detail_width);
         let cut = lines.len() > 3;
         lines.truncate(3);
@@ -977,9 +977,9 @@ fn gallery(
             frame,
             Text::Caption,
             if waiting {
-                "Fetching a picture of it…"
+                crate::i18n::text("fetching-a-picture")
             } else {
-                "No picture of this one"
+                crate::i18n::text("no-picture")
             },
             ui.tinted(Role::TextSoft, coming),
             Align::Centre,
@@ -1041,7 +1041,7 @@ fn gallery(
         }
     }
     if shots.len() > fits {
-        let said = format!("{} of {}", at + 1, shots.len());
+        let said = crate::message!("place-of-total", "place" => at + 1, "total" => shots.len());
         let ui = page.ui();
         let ink = ui.tinted(Role::TextSoft, coming);
         ui.label_tinted(
@@ -1179,9 +1179,9 @@ fn changes(
             [said, at, width, title],
             Text::Body,
             &if release.version.is_empty() {
-                "A release".to_string()
+                crate::i18n::text("a-release").to_string()
             } else {
-                format!("Version {}", release.version)
+                crate::message!("version-number", "version" => release.version.to_string())
             },
             ui.tinted(Role::Text, coming),
             Align::Left,
@@ -1229,7 +1229,7 @@ fn permissions(store: &mut Store, page: &mut Page, room: [f32; 4], id: &str, com
         page.ui().label(
             room,
             Text::Body,
-            "Install it, and what it may reach can be changed here.",
+            crate::i18n::text("permissions-after-install"),
             Role::TextSoft,
             Align::Left,
         );
@@ -1319,7 +1319,7 @@ fn permissions(store: &mut Store, page: &mut Page, room: [f32; 4], id: &str, com
         ui.label_tinted(
             [room[0], bottom + gap * 0.4, room[2], caption],
             Text::Caption,
-            "Also asked for, and not changed here",
+            crate::i18n::text("permissions-also-asked-for"),
             ui.tinted(Role::TextSoft, coming * 0.7),
             Align::Left,
         );
@@ -1356,9 +1356,9 @@ fn reset_row(store: &mut Store, page: &mut Page, rect: [f32; 4], touched: bool, 
         [rect[0] + mark + pad, rect[1], rect[2] - mark - pad, rect[3]],
         Text::Body,
         if touched {
-            "Put everything back to what it asked for"
+            crate::i18n::text("permissions-put-back")
         } else {
-            "Nothing here has been changed yet"
+            crate::i18n::text("permissions-unchanged")
         },
         ui.tinted(if touched { Role::Text } else { Role::TextSoft }, coming),
         Align::Left,
@@ -1391,15 +1391,23 @@ fn switch_row(
     // these and a page that showed three of them at a time would be a page
     // nobody scrolls to the end of.
     let said = (rect[2] - switch_width - pad * 2.0).max(page.scaled(120.0));
-    let titled = (said * 0.34).max(page.measure(Text::Body, toggle.title).min(said * 0.5));
-    let note = one_line(page, Text::Caption, toggle.note, said - titled - pad);
+    let titled = (said * 0.34).max(
+        page.measure(Text::Body, crate::i18n::text(toggle.title))
+            .min(said * 0.5),
+    );
+    let note = one_line(
+        page,
+        Text::Caption,
+        crate::i18n::text(toggle.note),
+        said - titled - pad,
+    );
 
     let ui = page.ui();
     let _ = body_line;
     ui.label_tinted(
         [rect[0], rect[1], titled, rect[3]],
         Text::Body,
-        toggle.title,
+        crate::i18n::text(toggle.title),
         ui.tinted(Role::Text, coming),
         Align::Left,
     );
@@ -1534,7 +1542,7 @@ pub fn repository(store: &mut Store, page: &mut Page, room: [f32; 4], name: &str
         page.ui().label(
             room,
             Text::Title,
-            "That repository is no longer configured.",
+            crate::i18n::text("repository-no-longer-configured"),
             Role::TextSoft,
             Align::Left,
         );
@@ -1553,11 +1561,11 @@ pub fn repository(store: &mut Store, page: &mut Page, room: [f32; 4], name: &str
 
     let mut said = vec![
         remote.scope.title().to_string(),
-        format!("{offers} on offer"),
-        format!("{installed} installed from it"),
+        crate::message!("remote-offers", "offers" => offers),
+        crate::message!("remote-installed-from", "installed" => installed),
     ];
     if remote.priority != 1 {
-        said.push(format!("priority {}", remote.priority));
+        said.push(crate::message!("remote-priority", "priority" => remote.priority));
     }
 
     let text_left = room[0] + mark + gap * 1.4;
@@ -1627,7 +1635,7 @@ pub fn repository(store: &mut Store, page: &mut Page, room: [f32; 4], name: &str
         ui.label_tinted(
             [text_left, top, text_width, caption],
             Text::Caption,
-            "Nothing from here is signature-checked.",
+            crate::i18n::text("repository-not-signature-checked"),
             ui.tinted(Role::Danger, coming),
             Align::Left,
         );
@@ -1637,7 +1645,7 @@ pub fn repository(store: &mut Store, page: &mut Page, room: [f32; 4], name: &str
         ui.label_tinted(
             [text_left, top, text_width, caption],
             Text::Caption,
-            "Switched off. Nothing from here is offered, and nothing installed from it was touched.",
+            crate::i18n::text("repository-switched-off-note"),
             ui.tinted(Role::TextSoft, coming),
             Align::Left,
         );
@@ -1679,14 +1687,14 @@ pub fn adding(store: &mut Store, page: &mut Page, room: [f32; 4]) {
     ui.label_tinted(
         [room[0], room[1], room[2], title_line],
         Text::Display,
-        "Add a repository",
+        crate::i18n::text("add-a-repository"),
         ui.tinted(Role::Text, coming),
         Align::Left,
     );
     ui.label_tinted(
         [room[0], room[1] + title_line, room[2], caption],
         Text::Caption,
-        "Added for this user, so nothing has to be authorised.",
+        crate::i18n::text("repository-added-for-this-user"),
         ui.tinted(Role::TextSoft, coming),
         Align::Left,
     );
@@ -1765,9 +1773,9 @@ pub fn adding(store: &mut Store, page: &mut Page, room: [f32; 4]) {
             [sunk[0] + mark + pad, at + line, width, caption],
             Text::Caption,
             if here[index] {
-                "Already on this machine"
+                crate::i18n::text("already-on-this-machine")
             } else {
-                known.note
+                crate::i18n::text(known.note)
             },
             ui.tinted(Role::TextSoft, coming * 0.85),
             Align::Left,
@@ -1823,9 +1831,9 @@ pub fn adding(store: &mut Store, page: &mut Page, room: [f32; 4]) {
             [written[0], at, written[2], line],
             Text::Body,
             if typing {
-                "The address of a .flatpakrepo file"
+                crate::i18n::text("repository-address-note")
             } else {
-                "Type an address"
+                crate::i18n::text("type-an-address")
             },
             ui.tinted(Role::TextSoft, coming),
             Align::Left,
@@ -1843,11 +1851,11 @@ pub fn adding(store: &mut Store, page: &mut Page, room: [f32; 4]) {
         [written[0], at + line, written[2], caption],
         Text::Caption,
         &if !typing && typed.is_empty() {
-            "A .flatpakrepo file from anywhere".to_string()
+            crate::i18n::text("repository-file-from-anywhere").to_string()
         } else if named.is_empty() {
-            "It will be filed under whatever the file is called.".to_string()
+            crate::i18n::text("repository-filed-under-the-file-name").to_string()
         } else {
-            format!("It will be filed under {named}.")
+            crate::message!("filed-under-name", "name" => (named).to_string())
         },
         ui.tinted(Role::TextSoft, coming * 0.8),
         Align::Left,
@@ -1880,16 +1888,16 @@ fn facts_of(
     match installed {
         Some(one) => {
             if !one.version.is_empty() {
-                said.push(Fact::plain(format!("Version {}", one.version)));
+                said.push(Fact::plain(
+                    crate::message!("version-number", "version" => one.version.to_string()),
+                ));
             }
-            said.push(Fact::accented(format!(
-                "{} on disk",
-                flatpak::size(one.size)
-            )));
-            said.push(Fact::plain(format!(
-                "Installed for {}",
-                one.scope.title().to_lowercase()
-            )));
+            said.push(Fact::accented(
+                crate::message!("size-on-disk", "size" => flatpak::size(one.size)),
+            ));
+            said.push(Fact::plain(
+                crate::message!("installed-for-scope", "scope" => one.scope.title().to_lowercase()),
+            ));
             // The branch only where it is not the one everything is on, and
             // the origin always: an application installed from somewhere that
             // is not the remote offering it now is worth seeing.
@@ -1900,59 +1908,52 @@ fn facts_of(
                 said.push(Fact::plain(machine.remote_title(&one.origin)));
             }
             if !one.runtime.is_empty() {
-                said.push(Fact::plain(format!(
-                    "Runs on {}",
-                    short_runtime(&one.runtime)
-                )));
+                said.push(Fact::plain(
+                    crate::message!("runs-on-runtime", "runtime" => short_runtime(&one.runtime)),
+                ));
             }
             // An update needs no authorization under flatpak's own policy —
             // the commit is signed, and unattended updates would be impossible
             // otherwise — so on nearly every machine nothing is said here. On
             // one whose owner has locked updates down, it is.
             if one.scope.goes_through_the_helper() && flatpak::will_ask(flatpak::Act::Update) {
-                said.push(Fact::warning("Authorization required"));
+                said.push(Fact::warning(crate::i18n::text("authorization-required")));
             }
         }
         None => {
             if let Some(listing) = listing {
                 if !listing.version.is_empty() {
-                    said.push(Fact::plain(format!("Version {}", listing.version)));
+                    said.push(Fact::plain(
+                        crate::message!("version-number", "version" => listing.version.to_string()),
+                    ));
                 }
                 // What it would really cost, once the worker has been out and
                 // resolved it. That number counts every runtime and extension
                 // this machine does not already have, which is the difference
                 // between 828 kB and 759 MB.
                 match store.weights.get(&listing.id) {
-                    Some((download, installed)) => said.push(Fact::accented(format!(
-                        "{} download  ·  {} on disk",
-                        flatpak::size(*download),
-                        flatpak::size(*installed)
-                    ))),
+                    Some((download, installed)) => said.push(Fact::accented(crate::message!("download-and-on-disk", "download" => flatpak::size(*download), "size" => flatpak::size(*installed)))),
                     // Only while somebody is actually out working it out. A
                     // page that said so for ever would be a page waiting on
                     // nothing.
                     None if store.weighing(&listing.id) => {
-                        said.push(Fact::plain("Calculating download size…"))
+                        said.push(Fact::plain(crate::i18n::text("calculating-download-size")))
                     }
                     None => {}
                 }
                 let scope = machine.install_scope(&listing.remote);
-                said.push(Fact::plain(format!(
-                    "Installs for {}",
-                    scope.title().to_lowercase()
-                )));
+                said.push(Fact::plain(
+                    crate::message!("installs-for-scope", "scope" => scope.title().to_lowercase()),
+                ));
                 // Only where this machine will really ask. See
                 // `flatpak::will_ask`: "system" is not the answer, and saying
                 // it was put this warning on every page of a machine whose
                 // owner is never asked for anything.
                 if scope.goes_through_the_helper() && flatpak::will_ask(flatpak::Act::Install) {
-                    said.push(Fact::warning("Authorization required"));
+                    said.push(Fact::warning(crate::i18n::text("authorization-required")));
                 }
                 if !listing.runtime.is_empty() {
-                    said.push(Fact::plain(format!(
-                        "Runs on {}",
-                        short_runtime(&listing.runtime)
-                    )));
+                    said.push(Fact::plain(crate::message!("runs-on-runtime", "runtime" => short_runtime(&listing.runtime))));
                 }
             }
         }
@@ -1967,11 +1968,7 @@ fn facts_of(
         .or(installed.map(|one| one.id.as_str()));
     if let Some(rated) = id.and_then(|id| store.ratings.of(id)) {
         let reviews = rated.reviews();
-        said.push(Fact::plain(format!(
-            "{:.1} out of 5  ·  {reviews} review{}",
-            rated.mean(),
-            if reviews == 1 { "" } else { "s" }
-        )));
+        said.push(Fact::plain(crate::message!("rating-reviews", "rating" => lxb_app::lxb_toolkit::i18n::decimal(format!("{:.1}", rated.mean())), "reviews" => reviews)));
     }
     if let Some(listing) = listing {
         if !listing.license.is_empty() {
@@ -1990,9 +1987,9 @@ fn facts_of(
 fn license_title(license: &str) -> String {
     let reference = license.split('=').next().unwrap_or(license).trim();
     match reference.to_ascii_lowercase().as_str() {
-        "licenseref-proprietary" => "Proprietary license".into(),
-        "licenseref-free" => "Free software license".into(),
-        one if one.starts_with("licenseref-") => "Custom license".into(),
+        "licenseref-proprietary" => crate::i18n::text("proprietary-license").into(),
+        "licenseref-free" => crate::i18n::text("free-software-license").into(),
+        one if one.starts_with("licenseref-") => crate::i18n::text("custom-license").into(),
         _ => license.to_string(),
     }
 }
@@ -2028,17 +2025,17 @@ fn short_runtime(runtime: &str) -> String {
 /// What the buttons do on a detail page, which depends on where the light is.
 pub fn hints(store: &Store, id: &str) -> Vec<crate::legend::Hint> {
     use crate::legend::{hint, Button};
-    let back = hint("Back", Button::Back);
+    let back = hint(crate::i18n::text("back"), Button::Back);
     match store.band {
-        Band::Buttons => vec![hint("Press", Button::Accept), back],
+        Band::Buttons => vec![hint(crate::i18n::text("press"), Button::Accept), back],
         // Nothing on the tabs is pressed: a tab is read by stepping down into
         // it, and a legend naming Accept here would name a button that does
         // nothing.
         Band::Tabs => vec![back],
         Band::Content => match store.tab(id) {
             Tab::About | Tab::Changes => vec![back],
-            Tab::Permissions => vec![hint("Switch", Button::Accept), back],
-            Tab::Links => vec![hint("Open", Button::Accept), back],
+            Tab::Permissions => vec![hint(crate::i18n::text("switch"), Button::Accept), back],
+            Tab::Links => vec![hint(crate::i18n::text("open"), Button::Accept), back],
         },
     }
 }
@@ -2216,10 +2213,16 @@ mod tests {
     fn custom_license_urls_become_store_copy() {
         assert_eq!(
             license_title("LicenseRef-proprietary=https://example.invalid/notice"),
-            "Proprietary license"
+            crate::i18n::text("proprietary-license")
         );
-        assert_eq!(license_title("LicenseRef-free"), "Free software license");
-        assert_eq!(license_title("LicenseRef-project"), "Custom license");
+        assert_eq!(
+            license_title("LicenseRef-free"),
+            crate::i18n::text("free-software-license")
+        );
+        assert_eq!(
+            license_title("LicenseRef-project"),
+            crate::i18n::text("custom-license")
+        );
     }
 
     #[test]

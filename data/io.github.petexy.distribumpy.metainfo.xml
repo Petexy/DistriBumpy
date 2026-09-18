@@ -5,7 +5,23 @@
   <project_license>GPL-3.0-only</project_license>
 
   <name>Software Hub</name>
+  <name xml:lang="de">Software-Center</name>
+  <name xml:lang="es">Centro de software</name>
+  <name xml:lang="fr">Logithèque</name>
+  <name xml:lang="hi">सॉफ़्टवेयर हब</name>
+  <name xml:lang="pl">Centrum oprogramowania</name>
+  <name xml:lang="pt_BR">Central de Programas</name>
+  <name xml:lang="ru">Центр приложений</name>
+  <name xml:lang="zh_CN">软件中心</name>
   <summary>Install, update and remove Flatpak applications and games</summary>
+  <summary xml:lang="de">Flatpak-Anwendungen und -Spiele installieren, aktualisieren und entfernen</summary>
+  <summary xml:lang="es">Instale, actualice y quite aplicaciones y juegos Flatpak</summary>
+  <summary xml:lang="fr">Installez, mettez à jour et supprimez des applications et des jeux Flatpak</summary>
+  <summary xml:lang="hi">Flatpak ऐप्लिकेशन और गेम इंस्टॉल करें, अपडेट करें और हटाएँ</summary>
+  <summary xml:lang="pl">Instaluj, aktualizuj i usuwaj aplikacje oraz gry Flatpak</summary>
+  <summary xml:lang="pt_BR">Instale, atualize e remova aplicativos e jogos Flatpak</summary>
+  <summary xml:lang="ru">Устанавливайте, обновляйте и удаляйте приложения и игры Flatpak</summary>
+  <summary xml:lang="zh_CN">安装、更新和移除 Flatpak 应用程序与游戏</summary>
 
   <description>
     <p>
@@ -34,6 +50,28 @@
       added, switched off, refreshed and forgotten from the same pages.
     </p>
     <p>It is an ordinary Wayland application and runs on any desktop.</p>
+
+    <p xml:lang="es">El Centro de software permite explorar, instalar, actualizar y quitar aplicaciones y juegos Flatpak dentro de la interfaz de LineXinBar.</p>
+    <p xml:lang="es">Busque aplicaciones y consulte capturas, descripciones, valoraciones e información de las versiones. Los catálogos guardados en el disco están disponibles también sin conexión.</p>
+    <p xml:lang="es">Gestione repositorios, actualizaciones y permisos de las aplicaciones con el mando, el teclado o el ratón.</p>
+    <p xml:lang="fr">La Logithèque permet de parcourir, installer, mettre à jour et supprimer des applications et des jeux Flatpak depuis l'interface de LineXinBar.</p>
+    <p xml:lang="fr">Cherchez des applications et consultez captures d'écran, descriptions, notes et informations de version. Les catalogues enregistrés sur le disque restent consultables hors ligne.</p>
+    <p xml:lang="fr">Gérez les dépôts, les mises à jour et les permissions des applications à la manette, au clavier ou à la souris.</p>
+    <p xml:lang="pl">Centrum oprogramowania umożliwia przeglądanie, instalowanie, aktualizowanie i usuwanie aplikacji oraz gier Flatpak w interfejsie LineXinBar.</p>
+    <p xml:lang="pl">Wyszukuj aplikacje, przeglądaj zrzuty ekranu, opisy, oceny i informacje o wydaniach. Katalogi zapisane na dysku są dostępne również bez połączenia z siecią.</p>
+    <p xml:lang="pl">Zarządzaj repozytoriami, aktualizacjami i uprawnieniami aplikacji za pomocą kontrolera, klawiatury lub myszy.</p>
+    <p xml:lang="de">Das Software-Center lässt Sie Flatpak-Anwendungen und -Spiele im Erscheinungsbild von LineXinBar durchsehen, installieren, aktualisieren und entfernen.</p>
+    <p xml:lang="de">Suchen Sie nach Anwendungen und sehen Sie Bildschirmfotos, Beschreibungen, Bewertungen und Versionshinweise. Die auf der Festplatte gehaltenen Kataloge sind auch ohne Netzwerk zu lesen.</p>
+    <p xml:lang="de">Verwalten Sie Repositories, Aktualisierungen und die Berechtigungen einer Anwendung mit Controller, Tastatur oder Maus.</p>
+    <p xml:lang="pt_BR">A Central de Programas permite percorrer, instalar, atualizar e remover aplicativos e jogos Flatpak com a aparência do LineXinBar.</p>
+    <p xml:lang="pt_BR">Pesquise aplicativos e veja capturas de tela, descrições, avaliações e notas de lançamento. Os catálogos guardados no disco são legíveis mesmo sem rede.</p>
+    <p xml:lang="pt_BR">Gerencie repositórios, atualizações e as permissões de um aplicativo com controle, teclado ou mouse.</p>
+    <p xml:lang="ru">Центр приложений позволяет просматривать, устанавливать, обновлять и удалять приложения и игры Flatpak в оформлении LineXinBar.</p>
+    <p xml:lang="ru">Ищите приложения и смотрите снимки экрана, описания, оценки и заметки о выпусках. Каталоги, сохранённые на диске, читаются и без сети.</p>
+    <p xml:lang="ru">Управляйте репозиториями, обновлениями и разрешениями приложения с контроллера, клавиатуры или мыши.</p>
+    <p xml:lang="zh_CN">软件中心让您以 LineXinBar 的外观浏览、安装、更新和移除 Flatpak 应用程序与游戏。</p>
+    <p xml:lang="zh_CN">搜索应用程序，查看截图、描述、评分和发布说明。保存在磁盘上的目录即使没有网络也能阅读。</p>
+    <p xml:lang="zh_CN">用手柄、键盘或鼠标管理仓库、更新和应用程序的权限。</p>
   </description>
 
   <launchable type="desktop-id">distribumpy.desktop</launchable>
@@ -82,4 +120,15 @@
     </release>
     <release version="0.1.0" type="development" date="2026-08-28"/>
   </releases>
+  <languages>
+    <lang percentage="100">en</lang>
+    <lang percentage="100">de</lang>
+    <lang percentage="100">es</lang>
+    <lang percentage="100">fr</lang>
+    <lang percentage="100">hi</lang>
+    <lang percentage="100">pl</lang>
+    <lang percentage="100">pt_BR</lang>
+    <lang percentage="100">ru</lang>
+    <lang percentage="100">zh_CN</lang>
+  </languages>
 </component>

@@ -33,11 +33,11 @@ pub enum Group {
 impl Group {
     pub fn title(self) -> &'static str {
         match self {
-            Group::Share => "Sharing",
-            Group::Socket => "Sockets",
-            Group::Device => "Devices",
-            Group::Feature => "Features",
-            Group::Filesystem => "Files",
+            Group::Share => crate::i18n::text("sharing"),
+            Group::Socket => crate::i18n::text("sockets"),
+            Group::Device => crate::i18n::text("devices"),
+            Group::Feature => crate::i18n::text("features"),
+            Group::Filesystem => crate::i18n::text("files"),
         }
     }
 
@@ -68,10 +68,9 @@ pub struct Toggle {
     pub group: Group,
     /// What flatpak calls it, which is what goes in the file.
     pub key: &'static str,
-    /// What a person calls it.
+    /// Catalog message ID for what a person calls it.
     pub title: &'static str,
-    /// What it actually lets the application do, said plainly. A permissions
-    /// page nobody understands is a permissions page nobody uses.
+    /// Catalog message ID describing what this permission allows.
     pub note: &'static str,
 }
 
@@ -86,122 +85,122 @@ pub const TOGGLES: &[Toggle] = &[
     Toggle {
         group: Group::Share,
         key: "network",
-        title: "Network",
-        note: "Reach the internet and the local network",
+        title: "permission-network",
+        note: "permission-network-note",
     },
     Toggle {
         group: Group::Share,
         key: "ipc",
-        title: "Talk to the display server directly",
-        note: "Shared memory with the windowing system, which makes drawing faster",
+        title: "permission-display-server",
+        note: "permission-display-server-note",
     },
     Toggle {
         group: Group::Socket,
         key: "wayland",
-        title: "Show windows",
-        note: "Draw on this display through Wayland",
+        title: "permission-show-windows",
+        note: "permission-show-windows-note",
     },
     Toggle {
         group: Group::Socket,
         key: "fallback-x11",
-        title: "Show windows the old way",
-        note: "Use X11 where Wayland is not available",
+        title: "permission-show-windows-x11",
+        note: "permission-show-windows-x11-note",
     },
     Toggle {
         group: Group::Socket,
         key: "x11",
-        title: "Full X11 access",
-        note: "Every X11 client can watch every other one, including what is typed",
+        title: "permission-full-x11-access",
+        note: "permission-full-x11-access-note",
     },
     Toggle {
         group: Group::Socket,
         key: "pulseaudio",
-        title: "Sound",
-        note: "Play sound, and record it",
+        title: "permission-sound",
+        note: "permission-sound-note",
     },
     Toggle {
         group: Group::Socket,
         key: "session-bus",
-        title: "Full session bus access",
-        note: "Talk to everything this user is running, around the portals",
+        title: "permission-full-session-bus-access",
+        note: "permission-full-session-bus-access-note",
     },
     Toggle {
         group: Group::Socket,
         key: "system-bus",
-        title: "Full system bus access",
-        note: "Talk to the services running for the whole machine",
+        title: "permission-full-system-bus-access",
+        note: "permission-full-system-bus-access-note",
     },
     Toggle {
         group: Group::Socket,
         key: "ssh-auth",
-        title: "SSH keys",
-        note: "Use the keys held by this session's SSH agent",
+        title: "permission-ssh-keys",
+        note: "permission-ssh-keys-note",
     },
     Toggle {
         group: Group::Socket,
         key: "cups",
-        title: "Printing",
-        note: "Reach the printers this machine knows about",
+        title: "permission-printing",
+        note: "permission-printing-note",
     },
     Toggle {
         group: Group::Device,
         key: "dri",
-        title: "Graphics",
-        note: "Use the graphics card, which anything drawing quickly needs",
+        title: "permission-graphics",
+        note: "permission-graphics-note",
     },
     Toggle {
         group: Group::Device,
         key: "input",
-        title: "Controllers",
-        note: "Read gamepads and other input devices directly",
+        title: "permission-controllers",
+        note: "permission-controllers-note",
     },
     Toggle {
         group: Group::Device,
         key: "usb",
-        title: "USB devices",
-        note: "Talk to devices plugged into this machine",
+        title: "permission-usb-devices",
+        note: "permission-usb-devices-note",
     },
     Toggle {
         group: Group::Device,
         key: "all",
-        title: "Every device",
-        note: "Everything in /dev, which is more than any application needs",
+        title: "permission-every-device",
+        note: "permission-every-device-note",
     },
     Toggle {
         group: Group::Feature,
         key: "devel",
-        title: "Debugging",
-        note: "Use the system calls a debugger needs",
+        title: "permission-debugging",
+        note: "permission-debugging-note",
     },
     Toggle {
         group: Group::Feature,
         key: "bluetooth",
-        title: "Bluetooth",
-        note: "Talk to Bluetooth devices directly",
+        title: "permission-bluetooth",
+        note: "permission-bluetooth-note",
     },
     Toggle {
         group: Group::Feature,
         key: "multiarch",
-        title: "32-bit code",
-        note: "Run programs built for the other architecture",
+        title: "permission-32-bit-code",
+        note: "permission-32-bit-code-note",
     },
     Toggle {
         group: Group::Filesystem,
         key: "home",
-        title: "All your files",
-        note: "Read and write everything in your home folder, not only what you open",
+        title: "permission-all-your-files",
+        note: "permission-all-your-files-note",
     },
     Toggle {
         group: Group::Filesystem,
         key: "host",
-        title: "All system files",
-        note: "Read and write the whole machine outside the sandbox",
+        title: "permission-all-system-files",
+        note: "permission-all-system-files-note",
     },
     Toggle {
         group: Group::Filesystem,
         key: "xdg-download",
-        title: "Downloads",
-        note: "Read and write your Downloads folder",
+        title: "permission-downloads",
+        note: "permission-downloads-note",
     },
 ];
 

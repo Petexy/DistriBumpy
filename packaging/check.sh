@@ -147,10 +147,25 @@ metainfo_name="$(awk 'match($0, /<name>[^<]+<\/name>/) {
         print line
         exit
     }' "$PROJECT_ROOT/data/io.github.petexy.distribumpy.metainfo.xml")"
-window_names="$(grep -o 'App::new("distribumpy", "[^"]*")' "$PROJECT_ROOT/src/main.rs" \
-    | sed -e 's/^.*, "//' -e 's/")$//' | sort -u)"
+# Since the window title was translated it is a *message* rather than a literal,
+# so the id is read out of the source and the word out of `en-GB.ftl` — the
+# fallback catalogue, which is the language the desktop entry's own
+# untranslated `Name=` is in. Comparing against any other catalogue would be
+# comparing two languages and failing every time.
+window_title_id="$(grep -o 'App::new("distribumpy", crate::i18n::text("[^"]*"))' \
+    "$PROJECT_ROOT/src/main.rs" | sed -e 's/^.*text("//' -e 's/"))$//' | sort -u)"
+[[ -n "$window_title_id" ]] \
+    || package_die "src/main.rs names no window title message"
+[[ "$(printf '%s\n' "$window_title_id" | wc -l)" -eq 1 ]] \
+    || package_die "src/main.rs opens windows under more than one message:
+$window_title_id"
+window_names="$(awk -v id="$window_title_id" \
+    '$1 == id && $2 == "=" { sub(/^[^=]*= /, ""); print; exit }' \
+    "$PROJECT_ROOT/locales/en-GB.ftl")"
 [[ -n "$desktop_name" ]] || package_die "the desktop entry has no Name="
 [[ -n "$metainfo_name" ]] || package_die "the metainfo has no <name>"
+[[ -n "$window_names" ]] \
+    || package_die "locales/en-GB.ftl has no $window_title_id, which is the message src/main.rs opens its window under"
 [[ "$(printf '%s\n' "$window_names" | wc -l)" -eq 1 ]] \
     || package_die "src/main.rs opens windows under more than one name:
 $window_names"

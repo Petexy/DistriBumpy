@@ -33,11 +33,11 @@ pub enum Shelf {
 impl Shelf {
     pub fn title(self) -> &'static str {
         match self {
-            Shelf::Home => "Home",
-            Shelf::Search => "Search",
-            Shelf::Updates => "Updates",
-            Shelf::Installed => "Installed",
-            Shelf::Repositories => "Repositories",
+            Shelf::Home => crate::i18n::text("home"),
+            Shelf::Search => crate::i18n::text("search"),
+            Shelf::Updates => crate::i18n::text("updates"),
+            Shelf::Installed => crate::i18n::text("installed"),
+            Shelf::Repositories => crate::i18n::text("repositories"),
             Shelf::Section(section) => section.title(),
         }
     }
@@ -47,7 +47,7 @@ impl Shelf {
     /// is clipped, which reads as a fault rather than as a long name.
     pub fn short_title(self) -> &'static str {
         match self {
-            Shelf::Section(Section::Education) => "Education",
+            Shelf::Section(Section::Education) => crate::i18n::text("education"),
             other => other.title(),
         }
     }
@@ -107,7 +107,7 @@ impl Shelf {
     }
 }
 
-fn shelves() -> Vec<Shelf> {
+pub fn shelves() -> Vec<Shelf> {
     let mut all = vec![Shelf::Home, Shelf::Search, Shelf::Updates, Shelf::Installed];
     all.extend(Section::ALL.map(Shelf::Section));
     all.push(Shelf::Repositories);
@@ -272,13 +272,13 @@ impl Order {
     /// naming something the shelf does not do.
     pub fn title(self, shelf: Shelf) -> &'static str {
         match self {
-            Order::Best if shelf == Shelf::Search => "Best match",
-            Order::Best => "Name (A to Z)",
-            Order::Rating => "Rating (highest first)",
-            Order::Reviews => "Reviews (most first)",
-            Order::Size => "Size (largest first)",
-            Order::Newest => "Released (newest first)",
-            Order::Verified => "Verified publishers first",
+            Order::Best if shelf == Shelf::Search => crate::i18n::text("best-match"),
+            Order::Best => crate::i18n::text("name-a-to-z"),
+            Order::Rating => crate::i18n::text("rating-highest-first"),
+            Order::Reviews => crate::i18n::text("reviews-most-first"),
+            Order::Size => crate::i18n::text("size-largest-first"),
+            Order::Newest => crate::i18n::text("released-newest-first"),
+            Order::Verified => crate::i18n::text("verified-publishers-first"),
         }
     }
 
@@ -286,13 +286,13 @@ impl Order {
     /// has to be short enough to sit at the end of a line.
     pub fn shown(self, shelf: Shelf) -> &'static str {
         match self {
-            Order::Best if shelf == Shelf::Search => "best match",
-            Order::Best => "by name",
-            Order::Rating => "best rated",
-            Order::Reviews => "most reviewed",
-            Order::Size => "largest first",
-            Order::Newest => "newest first",
-            Order::Verified => "verified first",
+            Order::Best if shelf == Shelf::Search => crate::i18n::text("best-match-label"),
+            Order::Best => crate::i18n::text("by-name"),
+            Order::Rating => crate::i18n::text("best-rated"),
+            Order::Reviews => crate::i18n::text("most-reviewed"),
+            Order::Size => crate::i18n::text("largest-first"),
+            Order::Newest => crate::i18n::text("newest-first"),
+            Order::Verified => crate::i18n::text("verified-first"),
         }
     }
 
@@ -534,10 +534,10 @@ pub enum Tab {
 impl Tab {
     pub fn title(self) -> &'static str {
         match self {
-            Tab::About => "About",
-            Tab::Changes => "What's new",
-            Tab::Permissions => "Permissions",
-            Tab::Links => "Links",
+            Tab::About => crate::i18n::text("about"),
+            Tab::Changes => crate::i18n::text("what-s-new"),
+            Tab::Permissions => crate::i18n::text("permissions"),
+            Tab::Links => crate::i18n::text("links"),
         }
     }
 }
@@ -1157,7 +1157,8 @@ impl Store {
             Err(std::sync::mpsc::TryRecvError::Disconnected) => {
                 self.reading = None;
                 if self.machine.trouble.is_none() {
-                    self.machine.trouble = Some("The catalogue could not be read.".into());
+                    self.machine.trouble =
+                        Some(crate::i18n::text("catalogue-could-not-be-read").into());
                 }
             }
         }
@@ -1221,7 +1222,7 @@ impl Store {
                         self.weighing = None;
                     } else if self.about_this_job(&about) {
                         self.running = None;
-                        if why.starts_with("Stopped.") {
+                        if why.starts_with(crate::i18n::text("stopped")) {
                             self.note = Some(why);
                             self.trouble = None;
                         } else {
@@ -1274,14 +1275,11 @@ impl Store {
                 let left_over = self.machine.unused_count;
                 let mut rows = vec![head_row(
                     Kind::Trim,
-                    "Clear out what nothing needs",
+                    crate::i18n::text("clear-out-what-nothing-needs"),
                     &if left_over == 0 {
-                        "Nothing installed for this user is left over".to_string()
+                        crate::i18n::text("nothing-left-over-for-this-user").to_string()
                     } else {
-                        format!(
-                            "{left_over} left over for this user, {} of disk",
-                            flatpak::size(self.machine.unused)
-                        )
+                        crate::message!("left-over-for-this-user", "left-over" => left_over, "size" => flatpak::size(self.machine.unused))
                     },
                     "uninstall",
                 )];
@@ -1308,8 +1306,8 @@ impl Store {
                     // and extensions included — which is what the shelf under
                     // it now says as well.
                     let title = match scope {
-                        Scope::User => "Update everything for this user",
-                        Scope::System => "Update everything on this system",
+                        Scope::User => crate::i18n::text("update-everything-for-this-user"),
+                        Scope::System => crate::i18n::text("update-everything-on-this-system"),
                     };
                     // Whether this machine will really ask is polkit's answer
                     // and not the scope's: under flatpak's own policy an
@@ -1318,9 +1316,9 @@ impl Store {
                     let summary = if scope.goes_through_the_helper()
                         && flatpak::will_ask(flatpak::Act::Update)
                     {
-                        format!("{count} waiting  ·  authorization required")
+                        crate::message!("updates-waiting-authorization", "count" => count)
                     } else {
-                        format!("{count} waiting")
+                        crate::message!("updates-waiting", "count" => count)
                     };
                     rows.push(head_row(
                         Kind::UpdateAll { scope },
@@ -1340,8 +1338,8 @@ impl Store {
                 rows.extend(apps.into_iter().map(|one| self.row_of_installed(one)));
                 if !support.is_empty() {
                     rows.push(Row::heading(
-                        "Application support",
-                        "The runtimes and extensions these stand on",
+                        crate::i18n::text("application-support"),
+                        crate::i18n::text("application-support-note"),
                     ));
                     rows.extend(support.into_iter().map(|one| self.row_of_support(one)));
                 }
@@ -1350,8 +1348,8 @@ impl Store {
             Shelf::Repositories => {
                 let mut rows = vec![head_row(
                     Kind::Add,
-                    "Add a repository",
-                    "Flathub and the others, or an address of your own",
+                    crate::i18n::text("add-a-repository"),
+                    crate::i18n::text("repositories-note"),
                     "add",
                 )];
                 rows.extend(
@@ -1498,7 +1496,11 @@ impl Store {
         let commands: Vec<&str> = orders.iter().map(|order| order.title(shelf)).collect();
         let showing = self.showing_order();
         let marked = orders.iter().position(|order| *order == showing);
-        page.menu_marked(Some("Sort by"), &commands, marked.unwrap_or(usize::MAX));
+        page.menu_marked(
+            Some(crate::i18n::text("sort-by")),
+            &commands,
+            marked.unwrap_or(usize::MAX),
+        );
         self.opened_modal = true;
     }
 
@@ -1620,12 +1622,12 @@ impl Store {
         let mut said = Vec::new();
         said.push(remote.scope.title().to_string());
         if remote.disabled {
-            said.push("switched off".into());
+            said.push(crate::i18n::text("switched-off").into());
         } else if offers > 0 {
-            said.push(format!("{offers} on offer"));
+            said.push(crate::message!("remote-offers", "offers" => offers));
         }
         if installed > 0 {
-            said.push(format!("{installed} installed from it"));
+            said.push(crate::message!("remote-installed-from", "installed" => installed));
         }
         Row {
             id: remote.name.clone(),
@@ -2113,7 +2115,7 @@ impl Store {
                 self.out_of_the_card(&row.id);
             }
             Kind::Add if self.running.is_some() => {
-                self.note = Some("Finish the current operation first.".into())
+                self.note = Some(crate::i18n::text("finish-the-work-first").into())
             }
             Kind::Add => {
                 self.screen = Screen::AddRepository;
@@ -2129,7 +2131,7 @@ impl Store {
             // a press on one can honestly do is the one thing somebody would
             // want of it: fetch it.
             Kind::Support { .. } if self.running.is_some() => {
-                self.note = Some("Finish the current operation first.".into())
+                self.note = Some(crate::i18n::text("finish-the-work-first").into())
             }
             Kind::Support { scope } => {
                 let job = self.machine.support(&row.id, scope).map(|one| Job::Update {
@@ -2142,7 +2144,7 @@ impl Store {
             }
             Kind::UpdateAll { .. } | Kind::Trim if owns_job => self.stop(),
             Kind::UpdateAll { .. } | Kind::Trim if self.running.is_some() => {
-                self.note = Some("Finish the current operation first.".into())
+                self.note = Some(crate::i18n::text("finish-the-work-first").into())
             }
             Kind::UpdateAll { scope } => self.start(Job::UpdateAll { scope }),
             Kind::Trim => self.start(Job::Trim { scope: Scope::User }),
@@ -2395,8 +2397,7 @@ impl Store {
                     self.press_sound(page);
                     match sandbox::forget(id) {
                         Ok(()) => {
-                            self.note =
-                                Some("Everything is back to what the application asked for.".into())
+                            self.note = Some(crate::i18n::text("permissions-are-back").into())
                         }
                         Err(why) => self.trouble = Some(why),
                     }
@@ -2414,12 +2415,9 @@ impl Store {
                 let answer = sandbox::set(sandbox, id, toggle, on);
                 match answer {
                     Ok(()) => {
-                        self.note = Some(format!(
-                            "{} is {} for {}.",
-                            toggle.title,
-                            if on { "on" } else { "off" },
-                            self.name_of(id)
-                        ));
+                        self.note = Some(
+                            crate::message!("permission-changed", "permission" => crate::i18n::text(toggle.title), "state" => if on { "on" } else { "off" }, "app" => self.name_of(id)),
+                        );
                         self.trouble = None;
                     }
                     Err(why) => self.trouble = Some(why),
@@ -2507,7 +2505,8 @@ impl Store {
             }
             Action::Accept | Action::Submit => match flatpak::KNOWN.get(self.content) {
                 Some(known) if self.repository_is_here(known.name, Scope::User) => {
-                    self.note = Some(format!("{} is already on this machine.", known.title));
+                    self.note =
+                        Some(crate::message!("already-here", "name" => known.title.to_string()));
                     self.trouble = None;
                 }
                 Some(known) => {
@@ -2530,8 +2529,7 @@ impl Store {
                 }
                 None => {
                     self.press_sound(page);
-                    self.trouble =
-                        Some("An address has to start with https:// and name a repository.".into())
+                    self.trouble = Some(crate::i18n::text("address-needs-https").into())
                 }
             },
             _ => {}
@@ -2540,11 +2538,11 @@ impl Store {
 
     fn add_repository(&mut self, name: String, url: String) {
         if self.running.is_some() {
-            self.note = Some("Finish the current operation before adding a repository.".into());
+            self.note = Some(crate::i18n::text("finish-before-adding-a-repository").into());
             return;
         }
         if self.repository_is_here(&name, Scope::User) {
-            self.note = Some(format!("{name} is already on this machine."));
+            self.note = Some(crate::message!("already-here", "name" => (name).to_string()));
             self.trouble = None;
             return;
         }
@@ -2582,15 +2580,21 @@ impl Store {
                     .installed_app(id)
                     .is_some_and(|one| one.scope.goes_through_the_helper())
                     && flatpak::will_ask(flatpak::Act::Remove);
-                let mut body = format!(
-                    "{name} will be removed. Its settings and files in your home folder will stay."
-                );
+                let mut body = crate::message!("remove-what-stays", "name" => name.to_string());
                 if permission {
-                    body.push_str(" The desktop will ask for authorization.");
+                    // The space belongs to the code rather than to the
+                    // catalog: Fluent trims what a value begins with, so a
+                    // message written with a leading space loses it.
+                    body.push(' ');
+                    body.push_str(crate::i18n::text("desktop-will-ask-for-authorization"));
                 }
                 self.confirming = Some(Confirmation::Remove { id: id.clone() });
                 self.opened_modal = true;
-                page.ask(&format!("Remove {name}?"), &body, &["Keep it", "Remove"]);
+                page.ask(
+                    &crate::message!("remove-question", "name" => name.to_string()),
+                    &body,
+                    &[crate::i18n::text("keep-it"), crate::i18n::text("remove")],
+                );
                 return;
             }
             (Button::RepoForget, Screen::Repository { name, scope }) => {
@@ -2599,15 +2603,17 @@ impl Store {
                     .remote(name, *scope)
                     .map(|remote| remote.shown().to_string())
                     .unwrap_or_else(|| name.clone());
-                let body = format!(
-                    "{shown} will no longer offer applications or updates. Applications already installed from it will stay installed."
-                );
+                let body = crate::message!("forget-what-stays", "name" => shown.to_string());
                 self.confirming = Some(Confirmation::Forget {
                     name: name.clone(),
                     scope: *scope,
                 });
                 self.opened_modal = true;
-                page.ask(&format!("Forget {shown}?"), &body, &["Keep it", "Forget"]);
+                page.ask(
+                    &crate::message!("forget-question", "name" => shown.to_string()),
+                    &body,
+                    &[crate::i18n::text("keep-it"), crate::i18n::text("forget")],
+                );
                 return;
             }
             _ => {}
@@ -2673,7 +2679,7 @@ impl Store {
         self.worker.stop();
         if let Some(running) = &mut self.running {
             running.stopping = true;
-            running.step = "Stopping".into();
+            running.step = crate::i18n::text("stopping").into();
         }
     }
 
@@ -3175,15 +3181,15 @@ pub enum Button {
 impl Button {
     pub fn label(self) -> &'static str {
         match self {
-            Button::Install => "Install",
-            Button::Update => "Update",
-            Button::Remove => "Remove",
-            Button::Open => "Open",
-            Button::Stop => "Stop",
-            Button::RepoOn => "Switch on",
-            Button::RepoOff => "Switch off",
-            Button::RepoRefresh => "Fetch catalogue",
-            Button::RepoForget => "Forget",
+            Button::Install => crate::i18n::text("install"),
+            Button::Update => crate::i18n::text("update"),
+            Button::Remove => crate::i18n::text("remove"),
+            Button::Open => crate::i18n::text("open"),
+            Button::Stop => crate::i18n::text("stop"),
+            Button::RepoOn => crate::i18n::text("switch-on"),
+            Button::RepoOff => crate::i18n::text("switch-off"),
+            Button::RepoRefresh => crate::i18n::text("fetch-catalogue"),
+            Button::RepoForget => crate::i18n::text("forget"),
         }
     }
 
@@ -3577,10 +3583,13 @@ mod tests {
         }
         // The one label that is not the same everywhere: what "best" means on
         // Search is a ranking, and everywhere else it is the alphabet.
-        assert_eq!(Order::Best.title(Shelf::Search), "Best match");
+        assert_eq!(
+            Order::Best.title(Shelf::Search),
+            crate::i18n::text("best-match")
+        );
         assert_eq!(
             Order::Best.title(Shelf::Section(Section::Games)),
-            "Name (A to Z)"
+            crate::i18n::text("name-a-to-z")
         );
     }
 

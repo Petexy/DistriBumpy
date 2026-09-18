@@ -79,13 +79,13 @@ impl Link {
 
     pub fn title(self) -> &'static str {
         match self {
-            Link::Homepage => "Website",
-            Link::Help => "Help",
-            Link::Bugtracker => "Report a problem",
-            Link::Donation => "Donate",
-            Link::Contact => "Contact",
-            Link::Translate => "Translate it",
-            Link::Source => "Source code",
+            Link::Homepage => crate::i18n::text("website"),
+            Link::Help => crate::i18n::text("help"),
+            Link::Bugtracker => crate::i18n::text("report-a-problem"),
+            Link::Donation => crate::i18n::text("donate"),
+            Link::Contact => crate::i18n::text("contact"),
+            Link::Translate => crate::i18n::text("translate-it"),
+            Link::Source => crate::i18n::text("source-code"),
         }
     }
 
@@ -369,16 +369,16 @@ impl Section {
 
     pub fn title(self) -> &'static str {
         match self {
-            Section::Everything => "Everything",
-            Section::Multimedia => "Multimedia",
-            Section::Graphics => "Graphics",
-            Section::Internet => "Internet",
-            Section::Office => "Office",
-            Section::Games => "Games",
-            Section::Development => "Development",
-            Section::Education => "Education & Science",
-            Section::Utilities => "Utilities",
-            Section::System => "System",
+            Section::Everything => crate::i18n::text("everything"),
+            Section::Multimedia => crate::i18n::text("multimedia"),
+            Section::Graphics => crate::i18n::text("graphics"),
+            Section::Internet => crate::i18n::text("internet"),
+            Section::Office => crate::i18n::text("office"),
+            Section::Games => crate::i18n::text("games"),
+            Section::Development => crate::i18n::text("development"),
+            Section::Education => crate::i18n::text("education-science"),
+            Section::Utilities => crate::i18n::text("utilities"),
+            Section::System => crate::i18n::text("system"),
         }
     }
 
@@ -432,7 +432,29 @@ fn read_file(
     remote: &str,
     scope: crate::flatpak::Scope,
 ) -> Result<Vec<Listing>, String> {
-    let file = std::fs::File::open(path).map_err(|err| format!("cannot be read: {err}"))?;
+    read_file_for(
+        path,
+        icons,
+        remote,
+        scope,
+        lxb_app::lxb_toolkit::i18n::language(),
+    )
+}
+
+/// The same, in a language named rather than the session's.
+///
+/// Split out for the tests: which of an application's names, summaries and
+/// descriptions wins is the thing they are about, and a test that read the
+/// session's language would say something different on a Polish machine.
+fn read_file_for(
+    path: &Path,
+    icons: &Path,
+    remote: &str,
+    scope: crate::flatpak::Scope,
+    locale: &str,
+) -> Result<Vec<Listing>, String> {
+    let file = std::fs::File::open(path)
+        .map_err(|err| crate::message!("file-cannot-be-read", "why" => (err).to_string()))?;
     let mut reader = Reader::from_reader(BufReader::with_capacity(1 << 20, file));
     // Deliberately **not** trimmed by the reader.
     //
@@ -442,15 +464,15 @@ fn read_file(
     // as `Steam&friends`. The pieces are gathered whole and the whole is
     // tidied once, at the end of the element.
     reader.config_mut().trim_text(false);
-    parse(&mut reader, icons, remote, scope)
+    parse_for(&mut reader, icons, remote, scope, locale)
 }
 
 /// Which element's text is being collected, if any.
 ///
 /// AppStream repeats every translatable element once per language, and the
-/// translations carry `xml:lang`. Only the untranslated one is kept, because a
-/// store showing thirty names for one application is not a store.
-#[derive(PartialEq, Eq, Clone, Copy)]
+/// translations carry `xml:lang`. The selected session language wins, with the
+/// untranslated English field as fallback, independent of element order.
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 enum Collecting {
     Nothing,
     Id,
@@ -489,6 +511,9 @@ struct Parsing {
     describing: bool,
     /// Set while inside an element carrying `xml:lang`, so its text is dropped.
     translated: bool,
+    locale: String,
+    languages: Vec<u8>,
+    preferred: std::collections::BTreeMap<Collecting, u8>,
     /// Set while inside `<developer>`, whose `<name>` would otherwise be taken
     /// for the application's own.
     in_developer: bool,
@@ -521,12 +546,15 @@ struct Parsing {
 }
 
 impl Parsing {
-    fn new() -> Self {
+    fn new(locale: &str) -> Self {
         Self {
             listing: Listing::default(),
             collecting: Collecting::Nothing,
             describing: false,
             translated: false,
+            locale: lxb_app::lxb_toolkit::i18n::language_from(locale).to_owned(),
+            languages: Vec::new(),
+            preferred: Default::default(),
             in_developer: false,
             in_provides: false,
             in_screenshots: false,
@@ -551,21 +579,22 @@ impl Parsing {
 /// down before it is ever seen.
 const WIDEST_SCREENSHOT: u32 = 752;
 
-fn parse(
+fn parse_for(
     reader: &mut Reader<BufReader<std::fs::File>>,
     icons: &Path,
     remote: &str,
     scope: crate::flatpak::Scope,
+    locale: &str,
 ) -> Result<Vec<Listing>, String> {
     let mut listings = Vec::new();
     let mut buffer = Vec::with_capacity(1 << 16);
-    let mut state = Parsing::new();
+    let mut state = Parsing::new(locale);
     let mut inside = false;
 
     loop {
         let event = reader
             .read_event_into(&mut buffer)
-            .map_err(|err| format!("is not the catalogue it should be: {err}"))?;
+            .map_err(|err| crate::message!("catalogue-is-malformed", "why" => (err).to_string()))?;
         match event {
             Event::Eof => break,
             Event::Start(tag) => {
@@ -573,7 +602,7 @@ fn parse(
                 let name = name.as_ref();
                 if name == b"component" {
                     inside = true;
-                    state = Parsing::new();
+                    state = Parsing::new(locale);
                     state.listing.remote = remote.to_string();
                     state.listing.scope = scope;
                     buffer.clear();
@@ -592,7 +621,7 @@ fn parse(
                 if inside && state.collecting != Collecting::Nothing {
                     let value = text
                         .decode()
-                        .map_err(|err| format!("carries text that is not UTF-8: {err}"))?;
+                        .map_err(|err| crate::message!("catalogue-text-not-utf8", "why" => (err).to_string()))?;
                     state.text.push_str(&value);
                 }
             }
@@ -600,7 +629,7 @@ fn parse(
                 if inside && state.collecting != Collecting::Nothing {
                     let value = text
                         .decode()
-                        .map_err(|err| format!("carries text that is not UTF-8: {err}"))?;
+                        .map_err(|err| crate::message!("catalogue-text-not-utf8", "why" => (err).to_string()))?;
                     state.text.push_str(&value);
                 }
             }
@@ -608,7 +637,7 @@ fn parse(
                 if inside && state.collecting != Collecting::Nothing {
                     let named = entity
                         .decode()
-                        .map_err(|err| format!("carries text that is not UTF-8: {err}"))?;
+                        .map_err(|err| crate::message!("catalogue-text-not-utf8", "why" => (err).to_string()))?;
                     if let Some(letter) = resolve(&named) {
                         state.text.push(letter);
                     }
@@ -620,7 +649,7 @@ fn parse(
                 if name == b"component" {
                     inside = false;
                     if let Some(listing) =
-                        finish(std::mem::replace(&mut state, Parsing::new()).listing)
+                        finish(std::mem::replace(&mut state, Parsing::new(locale)).listing)
                     {
                         listings.push(listing);
                     }
@@ -646,7 +675,21 @@ fn parse(
 /// An opening tag inside a component: what it turns collection on for, and
 /// which region of the component it puts the parser in.
 fn opened(state: &mut Parsing, tag: &quick_xml::events::BytesStart, name: &[u8]) {
-    state.translated = has_language(tag);
+    let rank = match attribute(tag, b"xml:lang") {
+        Some(locale) => {
+            let base = locale.split(['_', '-', '.', '@']).next().unwrap_or("");
+            if base.eq_ignore_ascii_case(&state.locale) {
+                2
+            } else if base == "en" {
+                1
+            } else {
+                0
+            }
+        }
+        None => state.languages.last().copied().unwrap_or(1),
+    };
+    state.languages.push(rank);
+    state.translated = rank == 0;
     state.collecting = match name {
         b"id" if !state.in_provides => Collecting::Id,
         b"name" if state.in_developer => Collecting::Developer,
@@ -695,7 +738,10 @@ fn opened(state: &mut Parsing, tag: &quick_xml::events::BytesStart, name: &[u8])
         b"description" if !state.in_releases => state.describing = !state.translated,
         b"screenshots" => state.in_screenshots = true,
         b"releases" => state.in_releases = true,
-        b"screenshot" => state.shot = Shot::default(),
+        b"screenshot" => {
+            state.shot = Shot::default();
+            state.preferred.remove(&Collecting::Caption);
+        }
         b"content_rating" => state.listing.rated = true,
         _ => {}
     }
@@ -768,10 +814,12 @@ fn closed(state: &mut Parsing, name: &[u8]) {
         _ => {}
     }
     state.collecting = Collecting::Nothing;
-    state.translated = false;
+    state.languages.pop();
+    state.translated = state.languages.last().copied() == Some(0);
 }
 
 fn begin_release(state: &mut Parsing, tag: &quick_xml::events::BytesStart) {
+    state.preferred.remove(&Collecting::ReleaseNote);
     let version = attribute(tag, b"version").unwrap_or_default();
     // The newest release is the first one written, and it is what the shelves
     // call the version on offer — kept even past the point where the list of
@@ -811,6 +859,40 @@ fn end_release(state: &mut Parsing) {
 }
 
 fn take(state: &mut Parsing, icons: &Path, value: String) {
+    if matches!(
+        state.collecting,
+        Collecting::Name
+            | Collecting::Summary
+            | Collecting::Description
+            | Collecting::ReleaseNote
+            | Collecting::Developer
+            | Collecting::Keyword
+            | Collecting::Caption
+    ) {
+        let rank = state.languages.last().copied().unwrap_or(1);
+        let best = state.preferred.entry(state.collecting).or_default();
+        if rank < *best {
+            return;
+        }
+        if rank > *best {
+            match state.collecting {
+                Collecting::Name => state.listing.name.clear(),
+                Collecting::Summary => state.listing.summary.clear(),
+                Collecting::Developer => state.listing.developer.clear(),
+                Collecting::Caption => state.shot.caption.clear(),
+                Collecting::Description => state.listing.description.clear(),
+                Collecting::ReleaseNote => {
+                    if let Some(release) = &mut state.release {
+                        release.notes.clear();
+                    }
+                }
+                Collecting::Keyword => state.listing.keywords.clear(),
+                _ => {}
+            }
+            *best = rank;
+        }
+    }
+
     match state.collecting {
         Collecting::Nothing => {}
         Collecting::Id if state.listing.id.is_empty() => state.listing.id = value,
@@ -936,20 +1018,6 @@ fn finish(mut listing: Listing) -> Option<Listing> {
 /// needs one date, in one format, with no time zone in it, and this is the
 /// whole of what that takes.
 fn day(stamp: i64) -> String {
-    const MONTHS: [&str; 12] = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-    ];
     if stamp <= 0 {
         return String::new();
     }
@@ -982,17 +1050,11 @@ fn day(stamp: i64) -> String {
         days -= lengths[month];
         month += 1;
     }
-    format!("{} {} {year}", days + 1, MONTHS[month])
+    crate::message!("release-date", "day" => (days + 1).to_string(), "month" => lxb_app::lxb_toolkit::i18n::month(month + 1), "year" => year.to_string())
 }
 
 fn leap(year: i64) -> bool {
     (year % 4 == 0 && year % 100 != 0) || year % 400 == 0
-}
-
-fn has_language(tag: &quick_xml::events::BytesStart) -> bool {
-    tag.attributes()
-        .flatten()
-        .any(|attribute| attribute.key.as_ref() == b"xml:lang")
 }
 
 fn attribute(tag: &quick_xml::events::BytesStart, wanted: &[u8]) -> Option<String> {
@@ -1090,6 +1152,50 @@ mod tests {
 </components>
 "#;
 
+    #[test]
+    fn polish_appstream_fields_win_in_either_order_and_keep_protocol_data() {
+        for sample in [
+            SAMPLE.to_owned(),
+            SAMPLE.replace(
+                "<name>Player</name>\n    <name xml:lang=\"pl\">Odtwarzacz</name>",
+                "<name xml:lang=\"pl\">Odtwarzacz</name>\n    <name>Player</name>",
+            ),
+        ] {
+            let holder = tempdir::Holder::new();
+            let path = holder.path().join("translated.xml");
+            std::fs::write(&path, sample).unwrap();
+            let mut reader =
+                Reader::from_reader(BufReader::new(std::fs::File::open(&path).unwrap()));
+            let listings = parse_for(
+                &mut reader,
+                holder.path(),
+                "flathub",
+                crate::flatpak::Scope::User,
+                "pl_PL.UTF-8",
+            )
+            .unwrap();
+            let player = listings
+                .iter()
+                .find(|item| item.id == "org.example.Player")
+                .unwrap();
+            assert_eq!(player.name, "Odtwarzacz");
+            assert_eq!(player.summary, "Odtwarza rzeczy");
+            assert_eq!(player.description, "Pierwszy akapit.");
+            assert_eq!(player.screenshots[0].caption, "Odtwarzanie");
+            assert_eq!(player.releases[0].notes, "Everything is faster.");
+            assert_eq!(player.remote, "flathub");
+            assert_eq!(player.runtime, "org.example.Platform/x86_64/25.08");
+            assert_eq!(
+                listings
+                    .iter()
+                    .find(|item| item.id == "org.example.Old")
+                    .unwrap()
+                    .name,
+                "Still Here"
+            );
+        }
+    }
+
     fn parsed() -> (tempdir::Holder, Vec<Listing>) {
         let holder = tempdir::Holder::new();
         let file = holder.path().join("appstream.xml");
@@ -1101,7 +1207,7 @@ mod tests {
             [0u8; 4],
         )
         .expect("an icon");
-        let listings = read_file(&file, &icons, "flathub", crate::flatpak::Scope::User)
+        let listings = read_file_for(&file, &icons, "flathub", crate::flatpak::Scope::User, "en")
             .expect("the sample catalogue parses");
         (holder, listings)
     }
@@ -1257,7 +1363,8 @@ mod tests {
         assert_eq!(player.releases[0].version, "4.2.0");
         assert_eq!(player.releases[0].notes, "Everything is faster.");
         assert_eq!(
-            player.releases[0].when, "1 January 2026",
+            player.releases[0].when,
+            written(1, 1, 2026),
             "a release was dated wrongly"
         );
         assert!(
@@ -1266,16 +1373,59 @@ mod tests {
         );
     }
 
+    /// A date in the session's language, asked for the way `day` asks for it.
+    /// What the two shipped languages make of one is named in the test below.
+    fn written(day: u32, month: usize, year: i64) -> String {
+        crate::message!("release-date", "day" => day.to_string(),
+            "month" => lxb_app::lxb_toolkit::i18n::month(month), "year" => year.to_string())
+    }
+
+    #[test]
+    fn a_date_is_written_the_way_each_language_writes_one() {
+        let catalog = crate::i18n::Catalog::new(crate::i18n::RESOURCES);
+        let months =
+            lxb_app::lxb_toolkit::i18n::Catalog::new(lxb_app::lxb_toolkit::i18n::RESOURCES);
+        let said = |locale: &str| {
+            let mut args = crate::i18n::FluentArgs::new();
+            args.set("day", "29");
+            args.set(
+                "month",
+                months.text_for(locale, "month-february").to_string(),
+            );
+            args.set("year", "2000");
+            catalog.format_for(locale, "release-date", &args)
+        };
+        assert_eq!(said("en"), "29 February 2000");
+        assert_eq!(said("pl"), "29 lutego 2000");
+        // The day goes first in eight of the ten, and the month's form is the
+        // language's: Russian writes the genitive as Polish does, Spanish and
+        // Portuguese fence it with *de*, German points the day, and Chinese
+        // goes year to day with the month's name being its number and a
+        // character. A separator and three values could have written none of
+        // it, which is why a date is one message.
+        assert_eq!(said("de"), "29. Februar 2000");
+        assert_eq!(said("es"), "29 de febrero de 2000");
+        assert_eq!(said("fr"), "29 février 2000");
+        assert_eq!(said("hi"), "29 फ़रवरी 2000");
+        assert_eq!(said("pt_BR"), "29 de fevereiro de 2000");
+        assert_eq!(said("ru"), "29 февраля 2000 г.");
+        assert_eq!(said("zh_CN"), "2000年2月29日");
+    }
+
     #[test]
     fn a_day_is_written_the_way_a_person_reads_one() {
         assert_eq!(day(0), "", "a release with no date was given one");
-        assert_eq!(day(1), "1 January 1970");
-        assert_eq!(day(951_782_400), "29 February 2000", "a leap day was lost");
-        assert_eq!(day(1_767_225_600), "1 January 2026");
-        assert_eq!(day(1_756_339_200), "28 August 2025");
+        assert_eq!(day(1), written(1, 1, 1970));
+        assert_eq!(
+            day(951_782_400),
+            written(29, 2, 2000),
+            "a leap day was lost"
+        );
+        assert_eq!(day(1_767_225_600), written(1, 1, 2026));
+        assert_eq!(day(1_756_339_200), written(28, 8, 2025));
         assert_eq!(
             day(1_735_603_200),
-            "31 December 2024",
+            written(31, 12, 2024),
             "the last day of a leap year moved"
         );
     }

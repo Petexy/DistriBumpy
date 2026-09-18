@@ -58,20 +58,20 @@ impl Collection {
 
     pub fn title(self) -> &'static str {
         match self {
-            Collection::Popular => "Popular this month",
-            Collection::Trending => "Rising fastest",
-            Collection::New => "Just published",
-            Collection::Updated => "Just updated",
+            Collection::Popular => crate::i18n::text("popular-this-month"),
+            Collection::Trending => crate::i18n::text("rising-fastest"),
+            Collection::New => crate::i18n::text("just-published"),
+            Collection::Updated => crate::i18n::text("just-updated"),
         }
     }
 
     /// What the list is, said once under the heading.
     pub fn note(self) -> &'static str {
         match self {
-            Collection::Popular => "What Flathub is asked for most",
-            Collection::Trending => "What more people are installing this fortnight",
-            Collection::New => "Published for the first time",
-            Collection::Updated => "Rebuilt in the last few days",
+            Collection::Popular => crate::i18n::text("popular-this-month-note"),
+            Collection::Trending => crate::i18n::text("rising-fastest-note"),
+            Collection::New => crate::i18n::text("just-published-note"),
+            Collection::Updated => crate::i18n::text("just-updated-note"),
         }
     }
 

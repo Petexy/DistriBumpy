@@ -218,6 +218,14 @@ transaction worker, a fetcher for screenshots, and one for Flathub's own lists. 
 GObjects and are not `Send`** — nothing is handed between threads but a plain
 description of a job and a plain report of how it went.
 
+## Languages
+
+English and Polish, in whichever one the session speaks — on LineXinBar, the
+one Settings > Language names. Flathub's own names, summaries and release
+notes are shown in that language too where the remote publishes them. See
+[localization](docs/localization.md) for the catalogs, how to look at a page
+in the other language, and how to add one.
+
 ## Licence
 
 [GPL-3.0-only](LICENSE), matching LineXinBar and the toolkit.

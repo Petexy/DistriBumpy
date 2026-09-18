@@ -279,8 +279,27 @@ fn split_the_page(page: &mut Page, room: [f32; 4]) -> ([f32; 4], [f32; 4]) {
     // Wide enough for the longest shelf name and its count side by side.
     // Narrower than that and Repositories is drawn as Repositori…, which reads
     // as a fault; wider and it is taking room from the grid for nothing.
+    //
+    // Measured rather than fixed, because "the longest shelf name" is a
+    // different length in every language: 348 was the room English wants, and
+    // Polish says Zainstalowane where English says Installed. The panel asks
+    // the font how wide the names it is about to draw really are and takes
+    // that much, inside the same bounds as before — so English is drawn
+    // exactly as it was, and no language is drawn with its shelves cut.
+    let names = crate::store::shelves()
+        .into_iter()
+        .map(|shelf| page.measure(Text::Body, shelf.short_title()))
+        .fold(0.0f32, f32::max);
+    // The same three pieces a shelf row is built from — see [`shelves`] — plus
+    // the padding the panel keeps inside its own glass, which is what
+    // [`shelf_room`] takes off before a row is laid out at all.
+    let mark = page.metric(Metric::ItemIcon);
+    let pad = page.metric(Metric::RowPadding) * 0.7;
+    let tally = page.measure(Text::Caption, "888") + pad * 1.6;
+    let wanted = names + mark + tally + pad * 2.6 + page.metric(Metric::PanelPadding);
     let width = page
         .scaled(348.0)
+        .max(wanted)
         .min(room[2] * 0.32)
         .max(page.scaled(150.0));
     (
@@ -328,14 +347,14 @@ fn opening(store: &mut Store, page: &mut Page, room: [f32; 4]) {
     ui.label(
         [room[0], top + mark * 1.25, room[2], line],
         Text::Title,
-        "Reading what is on offer",
+        crate::i18n::text("reading-what-is-on-offer"),
         Role::Text,
         Align::Centre,
     );
     ui.label(
         [room[0], top + mark * 1.25 + line, room[2], body],
         Text::Body,
-        "The catalogue every remote keeps on this disk.",
+        crate::i18n::text("shelf-catalogue-note"),
         Role::TextSoft,
         Align::Centre,
     );
@@ -1261,25 +1280,18 @@ fn head_height(page: &Page, store: &Store) -> f32 {
 
 fn empty_words(store: &Store, shelf: Shelf) -> String {
     match shelf {
-        Shelf::Home if store.flathub.waiting() => {
-            "Asking Flathub what everybody else is installing…".into()
-        }
+        Shelf::Home if store.flathub.waiting() => crate::i18n::text("flathub-asking").into(),
         // Two different empty pages, because they want two different answers.
         Shelf::Home if store.flathub.any() => {
-            "Nothing on Flathub's own lists is offered by a repository this \
-             machine is reading."
-                .into()
+            crate::i18n::text("flathub-nothing-offered-here").into()
         }
-        Shelf::Home => "Flathub could not be reached, so there is nothing to show \
-                        here yet. Everything else on these shelves is read off \
-                        this disk and works without it."
-            .into(),
-        Shelf::Search if store.query.trim().is_empty() => "Type to look for something.".into(),
-        Shelf::Search => "Nothing here answers to that.".into(),
-        Shelf::Updates => "Everything on this machine is up to date.".into(),
-        Shelf::Installed => "Nothing is installed yet.".into(),
-        Shelf::Repositories => "No repository is configured on this machine.".into(),
-        Shelf::Section(_) => "This remote offers nothing on this shelf.".into(),
+        Shelf::Home => crate::i18n::text("flathub-unreachable").into(),
+        Shelf::Search if store.query.trim().is_empty() => crate::i18n::text("type-to-look").into(),
+        Shelf::Search => crate::i18n::text("nothing-answers-to-that").into(),
+        Shelf::Updates => crate::i18n::text("everything-up-to-date").into(),
+        Shelf::Installed => crate::i18n::text("nothing-installed-yet").into(),
+        Shelf::Repositories => crate::i18n::text("no-repository-configured").into(),
+        Shelf::Section(_) => crate::i18n::text("remote-offers-nothing-here").into(),
     }
 }
 
@@ -1288,18 +1300,12 @@ fn empty_words(store: &Store, shelf: Shelf) -> String {
 /// One noun per shelf, and the singular where there is one of it: "1
 /// application" reads as a sentence where "1 applications" reads as a bug.
 fn counted(shelf: Shelf, count: usize) -> String {
-    let one = count == 1;
     match shelf {
-        Shelf::Repositories if one => "1 repository".to_string(),
-        Shelf::Repositories => format!("{count} repositories"),
-        Shelf::Updates if one => "1 update waiting".to_string(),
-        Shelf::Updates => format!("{count} updates waiting"),
-        Shelf::Installed if one => "1 application installed".to_string(),
-        Shelf::Installed => format!("{count} applications installed"),
-        Shelf::Search if one => "1 application found".to_string(),
-        Shelf::Search => format!("{count} applications found"),
-        _ if one => "1 application".to_string(),
-        _ => format!("{count} applications"),
+        Shelf::Repositories => crate::message!("count-repositories", "count" => count),
+        Shelf::Updates => crate::message!("count-updates-waiting", "count" => count),
+        Shelf::Installed => crate::message!("count-apps-installed", "count" => count),
+        Shelf::Search => crate::message!("count-apps-found", "count" => count),
+        _ => crate::message!("count-apps", "count" => count),
     }
 }
 
@@ -1340,7 +1346,7 @@ fn heading(store: &mut Store, page: &mut Page, at: [f32; 4], shelf: Shelf) {
     // shelf has to say without being asked.
     let ending = store.machine.ending().len();
     if shelf == Shelf::Installed && ending > 0 {
-        shown = format!("{shown}  ·  {ending} no longer updated");
+        shown = crate::message!("shown-and-ending", "shown" => shown, "ending" => ending);
     }
     // And which way round they are, last because it is the one part that is
     // about the list rather than about what is on it. Said on the page rather
@@ -1421,7 +1427,7 @@ fn heading(store: &mut Store, page: &mut Page, at: [f32; 4], shelf: Shelf) {
         ui.label_tinted(
             written,
             Text::Body,
-            "Look for something",
+            crate::i18n::text("look-for-something"),
             ui.tinted(Role::Text, RESTING_INK),
             Align::Left,
         );
@@ -1501,14 +1507,14 @@ fn draw_cell(store: &mut Store, page: &mut Page, cell: &Cell) {
     let running = store.head_is_running(&row.kind);
     let blocked = store.running.is_some() && row.kind.is_head() && !running;
     let name = if running {
-        "Stop".to_string()
+        crate::i18n::text("stop").to_string()
     } else {
         row.name.clone()
     };
     let summary = if running {
-        "What has already been fetched stays here".to_string()
+        crate::i18n::text("stop-keeps-what-was-fetched").to_string()
     } else if blocked {
-        "Available when the current operation finishes".to_string()
+        crate::i18n::text("available-when-the-work-finishes").to_string()
     } else {
         row.summary.clone()
     };
@@ -1527,7 +1533,7 @@ fn draw_cell(store: &mut Store, page: &mut Page, cell: &Cell) {
         .is_app()
         .then(|| row.developer.trim())
         .filter(|said| !said.is_empty())
-        .map(|said| format!("By {said}"));
+        .map(|said| crate::message!("by-publisher", "publisher" => (said).to_string()));
     // Two lines of summary on a card and one across a head row, because a head
     // row is as wide as the page and a card is a third of it.
     let most = if cell.kind == LineKind::Wide || developer.is_some() {
@@ -1729,7 +1735,7 @@ fn draw_hero(store: &mut Store, page: &mut Page, row: &Row, rect: [f32; 4], fade
     let developer = if row.developer.trim().is_empty() {
         String::new()
     } else {
-        format!("By {}", row.developer.trim())
+        crate::message!("by-publisher", "publisher" => row.developer.trim().to_string())
     };
     let developer_room = if developer.is_empty() {
         0.0
@@ -1797,7 +1803,7 @@ fn draw_hero(store: &mut Store, page: &mut Page, row: &Row, rect: [f32; 4], fade
     ui.label_tinted(
         [words[0], top, eyebrow_width, eyebrow],
         Text::Caption,
-        "Featured on Flathub",
+        crate::i18n::text("featured-on-flathub"),
         // The accent is deliberately dark in some shell themes and does not
         // carry enough contrast as small type over glass. The hero's light
         // and artwork already supply the accent; this line should stay easy
@@ -1852,9 +1858,11 @@ fn draw_hero(store: &mut Store, page: &mut Page, row: &Row, rect: [f32; 4], fade
 
 fn stamp_of(row: &Row) -> Option<(String, Role)> {
     match &row.kind {
-        Kind::Repo { disabled: true, .. } => Some(("Off".into(), Role::TextSoft)),
-        _ if row.updatable => Some(("Update".into(), Role::Accent)),
-        _ if row.installed => Some(("Installed".into(), Role::TextSoft)),
+        Kind::Repo { disabled: true, .. } => {
+            Some((crate::i18n::text("off").into(), Role::TextSoft))
+        }
+        _ if row.updatable => Some((crate::i18n::text("update").into(), Role::Accent)),
+        _ if row.installed => Some((crate::i18n::text("installed").into(), Role::TextSoft)),
         _ => None,
     }
 }
@@ -1927,7 +1935,7 @@ fn footer(store: &mut Store, page: &mut Page, room: [f32; 4], screen: &Screen) {
             format!("{}  ·  {}", running.name, running.step)
         };
         let transferred = running.transferred;
-        let of = format!("{} of {}", running.at.max(1), running.of.max(1));
+        let of = crate::message!("place-of-total", "place" => running.at.max(1), "total" => running.of.max(1));
         let stopping = running.stopping;
         // The bar's own position, which follows the transaction rather than
         // stepping with it four times a second.
@@ -1998,9 +2006,10 @@ fn footer(store: &mut Store, page: &mut Page, room: [f32; 4], screen: &Screen) {
     let (said, role) = match (&store.trouble, &store.note) {
         (Some(trouble), _) => (trouble.clone(), Role::Danger),
         (None, Some(note)) => (note.clone(), Role::Text),
-        (None, None) if store.rereading() => {
-            ("Reading the machine again…".to_string(), Role::TextSoft)
-        }
+        (None, None) if store.rereading() => (
+            crate::i18n::text("reading-the-machine").to_string(),
+            Role::TextSoft,
+        ),
         (None, None) => (String::new(), Role::TextSoft),
     };
     if !said.is_empty() {
@@ -2032,29 +2041,40 @@ fn hints_for(store: &Store, screen: &Screen) -> Vec<crate::legend::Hint> {
         (Screen::Repository { name, scope }, _) => {
             let mut hints = Vec::new();
             if !store.repository_buttons(name, *scope).is_empty() {
-                hints.push(hint("Press", Button::Accept));
+                hints.push(hint(crate::i18n::text("press"), Button::Accept));
             }
-            hints.push(hint("Back", Button::Back));
+            hints.push(hint(crate::i18n::text("back"), Button::Back));
             hints
         }
         // The address row is a control that is pressed, so what the press
         // does depends on whether it has been pressed yet.
         (Screen::AddRepository, _) if store.adding.typing => vec![
-            hint("Add it", Button::Accept),
-            hint("Stop typing", Button::Back),
+            hint(crate::i18n::text("add-it"), Button::Accept),
+            hint(crate::i18n::text("stop-typing"), Button::Back),
         ],
         (Screen::AddRepository, _) if store.content == crate::flatpak::KNOWN.len() => {
-            vec![hint("Type", Button::Accept), hint("Back", Button::Back)]
+            vec![
+                hint(crate::i18n::text("type"), Button::Accept),
+                hint(crate::i18n::text("back"), Button::Back),
+            ]
         }
         (Screen::AddRepository, _) => {
-            vec![hint("Add it", Button::Accept), hint("Back", Button::Back)]
+            vec![
+                hint(crate::i18n::text("add-it"), Button::Accept),
+                hint(crate::i18n::text("back"), Button::Back),
+            ]
         }
         // On the shelves there is nowhere further back to go, so Back names
         // nothing and is left off.
-        (Screen::Browse, Column::Shelves) => with_order(store, vec![hint("Open", Button::Accept)]),
+        (Screen::Browse, Column::Shelves) => {
+            with_order(store, vec![hint(crate::i18n::text("open"), Button::Accept)])
+        }
         // A field is typed into rather than pressed, so what is worth saying
         // about it is the way out.
-        (Screen::Browse, Column::Field) => with_order(store, vec![hint("Shelves", Button::Back)]),
+        (Screen::Browse, Column::Field) => with_order(
+            store,
+            vec![hint(crate::i18n::text("shelves"), Button::Back)],
+        ),
         (Screen::Browse, Column::Listing) => with_order(
             store,
             vec![
@@ -2064,12 +2084,12 @@ fn hints_for(store: &Store, screen: &Screen) -> Vec<crate::legend::Hint> {
                 // saying Open there would name something that cannot happen.
                 hint(
                     match store.chosen().map(|row| &row.kind) {
-                        Some(Kind::Support { .. }) => "Update",
-                        _ => "Open",
+                        Some(Kind::Support { .. }) => crate::i18n::text("update"),
+                        _ => crate::i18n::text("open"),
                     },
                     Button::Accept,
                 ),
-                hint("Shelves", Button::Back),
+                hint(crate::i18n::text("shelves"), Button::Back),
             ],
         ),
     }
@@ -2092,7 +2112,7 @@ fn with_order(store: &Store, hints: Vec<crate::legend::Hint>) -> Vec<crate::lege
         .iter()
         .position(|one| one.on == Button::Back)
         .unwrap_or(with.len());
-    with.insert(at, hint("Sort", Button::Options));
+    with.insert(at, hint(crate::i18n::text("sort"), Button::Options));
     with
 }
 
@@ -2246,16 +2266,65 @@ fn browse_scroll_column(spot: Spot, rows: usize, shelves: usize) -> Option<Colum
 mod tests {
     use super::*;
 
+    /// The count each shelf says, in the session's language — asked of the
+    /// catalog the way the corner asks for it, because which language this
+    /// machine is in is not part of what the corner has to get right.
+    fn says(id: &str, count: usize) -> String {
+        let mut args = crate::i18n::FluentArgs::new();
+        args.set("count", count);
+        crate::i18n::format(id, &args)
+    }
+
     #[test]
     fn a_count_in_the_corner_says_what_it_is_counting() {
         assert_eq!(
             counted(Shelf::Section(crate::catalogue::Section::Games), 773),
-            "773 applications"
+            says("count-apps", 773)
         );
-        assert_eq!(counted(Shelf::Installed, 36), "36 applications installed");
-        assert_eq!(counted(Shelf::Updates, 13), "13 updates waiting");
-        assert_eq!(counted(Shelf::Search, 135), "135 applications found");
-        assert_eq!(counted(Shelf::Repositories, 2), "2 repositories");
+        assert_eq!(
+            counted(Shelf::Installed, 36),
+            says("count-apps-installed", 36)
+        );
+        assert_eq!(
+            counted(Shelf::Updates, 13),
+            says("count-updates-waiting", 13)
+        );
+        assert_eq!(counted(Shelf::Search, 135), says("count-apps-found", 135));
+        assert_eq!(
+            counted(Shelf::Repositories, 2),
+            says("count-repositories", 2)
+        );
+    }
+
+    /// And in English and in Polish, which is what the line above cannot
+    /// state. Polish has four forms of a noun where English has two, and the
+    /// two counts that catch a rule written by hand are 22 and 112.
+    #[test]
+    fn a_count_is_written_the_way_each_language_writes_one() {
+        let catalog = crate::i18n::Catalog::new(crate::i18n::RESOURCES);
+        let said = |locale: &str, count: usize| {
+            let mut args = crate::i18n::FluentArgs::new();
+            args.set("count", count);
+            catalog.format_for(locale, "count-apps", &args)
+        };
+        assert_eq!(said("en", 1), "1 application");
+        assert_eq!(said("en", 773), "773 applications");
+        assert_eq!(said("pl", 1), "1 aplikacja");
+        assert_eq!(said("pl", 22), "22 aplikacje");
+        assert_eq!(said("pl", 112), "112 aplikacji");
+        assert_eq!(said("pl", 773), "773 aplikacje");
+        // Russian draws the lines where Polish does: 22 is *few* in both and
+        // 12 is *many* in both, which is why the rule is not "ends in 1".
+        assert_eq!(said("ru", 1), "1 приложение");
+        assert_eq!(said("ru", 22), "22 приложения");
+        assert_eq!(said("ru", 112), "112 приложений");
+        // German and Brazilian Portuguese have two forms, Chinese one.
+        assert_eq!(said("de", 1), "1 Anwendung");
+        assert_eq!(said("de", 773), "773 Anwendungen");
+        assert_eq!(said("pt_BR", 1), "1 aplicativo");
+        assert_eq!(said("pt_BR", 773), "773 aplicativos");
+        assert_eq!(said("zh_CN", 1), "1 个应用程序");
+        assert_eq!(said("zh_CN", 773), "773 个应用程序");
     }
 
     #[test]
@@ -2269,14 +2338,14 @@ mod tests {
         ];
         for shelf in every {
             let said = counted(shelf, 1);
-            assert!(
-                said.starts_with("1 "),
-                "a count of one lost its number: {said}"
-            );
-            assert!(
-                !said.contains("1 applications")
-                    && !said.contains("1 updates")
-                    && !said.contains("1 repositories"),
+            assert!(said.contains('1'), "a count of one lost its number: {said}");
+            // The form of the noun is the catalog's to choose, so what is
+            // checked here is that it chose the singular one — whichever word
+            // that is in this language.
+            let plural = counted(shelf, 5);
+            assert_ne!(
+                said.replacen('1', "5", 1),
+                plural,
                 "a count of one was written as a plural: {said}"
             );
         }

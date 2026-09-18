@@ -17,6 +17,7 @@ mod detail;
 mod draw;
 mod flathub;
 mod flatpak;
+mod i18n;
 mod legend;
 mod motion;
 mod ratings;
@@ -41,7 +42,7 @@ fn main() -> Result<(), String> {
     }
 
     let mut store = store::Store::new();
-    lxb_app::App::new("distribumpy", "Software Hub")
+    lxb_app::App::new("distribumpy", crate::i18n::text("software-hub"))
         .driven()
         .plain()
         .run(move |page| frame(&mut store, page))
@@ -141,7 +142,7 @@ fn shot(path: &str, arguments: &[String]) -> Result<(), String> {
     // where a list is scrolled to follows from that. `App::shot` draws twice
     // at one instant, so between the two the store is put where it is going.
     let mut drawn = 0;
-    lxb_app::App::new("distribumpy", "Software Hub")
+    lxb_app::App::new("distribumpy", crate::i18n::text("software-hub"))
         .driven()
         .plain()
         .shot(path, width, height, 6.0, move |page| {

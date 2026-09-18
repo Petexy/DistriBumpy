@@ -34,8 +34,8 @@ pub enum Scope {
 impl Scope {
     pub fn title(self) -> &'static str {
         match self {
-            Scope::User => "This user",
-            Scope::System => "This system",
+            Scope::User => crate::i18n::text("this-user"),
+            Scope::System => crate::i18n::text("this-system"),
         }
     }
 
@@ -195,7 +195,7 @@ impl Machine {
             }
         }
         if opened == 0 {
-            machine.trouble = Some("Flatpak is not set up on this machine.".into());
+            machine.trouble = Some(crate::i18n::text("no-flatpak").into());
         }
         machine.read_what_is_left_over();
         machine
@@ -375,11 +375,11 @@ impl Machine {
                     .or_else(|| {
                         entry
                             .eol_rebase()
-                            .map(|to| format!("It has been renamed to {to}."))
+                            .map(|to| crate::message!("renamed-to", "to" => (to).to_string()))
                     })
                     .map(|said| {
                         if said.trim().is_empty() {
-                            "The publisher has stopped updating it.".to_string()
+                            crate::i18n::text("publisher-stopped-updating").to_string()
                         } else {
                             said
                         }
@@ -502,11 +502,21 @@ impl RepoJob {
 
     fn doing(&self) -> String {
         match self {
-            RepoJob::Enable { name, on: true } => format!("Switching {name} on"),
-            RepoJob::Enable { name, on: false } => format!("Switching {name} off"),
-            RepoJob::Forget { name } => format!("Forgetting {name}"),
-            RepoJob::Add { name, .. } => format!("Adding {name}"),
-            RepoJob::Refresh { name } => format!("Fetching {name}'s catalogue"),
+            RepoJob::Enable { name, on: true } => {
+                crate::message!("switching-on", "name" => (name).to_string())
+            }
+            RepoJob::Enable { name, on: false } => {
+                crate::message!("switching-off", "name" => (name).to_string())
+            }
+            RepoJob::Forget { name } => {
+                crate::message!("forgetting-remote", "name" => (name).to_string())
+            }
+            RepoJob::Add { name, .. } => {
+                crate::message!("adding-remote", "name" => (name).to_string())
+            }
+            RepoJob::Refresh { name } => {
+                crate::message!("fetching-catalogue", "name" => (name).to_string())
+            }
         }
     }
 }
@@ -625,13 +635,13 @@ impl Job {
     /// What the page says is happening, in the present tense.
     pub fn doing(&self) -> String {
         match self {
-            Job::Install { .. } => "Installing".into(),
-            Job::Update { .. } => "Updating".into(),
-            Job::Remove { .. } => "Removing".into(),
-            Job::UpdateAll { .. } => "Updating everything".into(),
-            Job::Trim { .. } => "Clearing out what nothing needs".into(),
-            Job::Weigh { .. } => "Working out what this would fetch".into(),
-            Job::Open { .. } => "Opening".into(),
+            Job::Install { .. } => crate::i18n::text("installing").into(),
+            Job::Update { .. } => crate::i18n::text("updating").into(),
+            Job::Remove { .. } => crate::i18n::text("removing").into(),
+            Job::UpdateAll { .. } => crate::i18n::text("updating-everything").into(),
+            Job::Trim { .. } => crate::i18n::text("clearing-out-what-nothing-needs").into(),
+            Job::Weigh { .. } => crate::i18n::text("working-out-the-download").into(),
+            Job::Open { .. } => crate::i18n::text("opening").into(),
             Job::Repository { job, .. } => job.doing(),
         }
     }
@@ -744,10 +754,9 @@ impl Worker {
 }
 
 fn run(job: &Job, voice: &Sender<Report>, stop: &Cancellable) -> Result<String, String> {
-    let installation = job
-        .scope()
-        .open()
-        .map_err(|err| format!("this installation cannot be opened: {err}"))?;
+    let installation = job.scope().open().map_err(
+        |err| crate::message!("installation-cannot-be-opened", "why" => (err).to_string()),
+    )?;
 
     match job {
         Job::Open { id, .. } => {
@@ -763,20 +772,20 @@ fn run(job: &Job, voice: &Sender<Report>, stop: &Cancellable) -> Result<String, 
             // under an aarch64 installation is started rather than missed.
             let installed = installation
                 .current_installed_app(id, Some(stop))
-                .map_err(|err| format!("it is not installed here: {err}"))?;
+                .map_err(|err| crate::message!("not-installed-here", "why" => (err).to_string()))?;
             let arch = installed.arch();
             let branch = installed.branch();
             return installation
                 .launch(id, arch.as_deref(), branch.as_deref(), None, Some(stop))
                 .map(|()| String::new())
-                .map_err(|err| format!("it would not start: {err}"));
+                .map_err(|err| crate::message!("would-not-start", "why" => (err).to_string()));
         }
         Job::Repository { job, .. } => return repository(&installation, job, stop),
         _ => {}
     }
 
     let transaction = libflatpak::Transaction::for_installation(&installation, Some(stop))
-        .map_err(|err| format!("this cannot be started: {err}"))?;
+        .map_err(|err| crate::message!("cannot-be-started", "why" => (err).to_string()))?;
 
     // Every other installation on the machine counts as somewhere a runtime
     // may already be. Without this, installing a 762 kB application for one
@@ -793,19 +802,21 @@ fn run(job: &Job, voice: &Sender<Report>, stop: &Cancellable) -> Result<String, 
             remote, reference, ..
         } => transaction
             .add_install(remote, reference, &[])
-            .map_err(|err| format!("this cannot be installed: {err}"))?,
+            .map_err(|err| crate::message!("cannot-be-installed", "why" => (err).to_string()))?,
         Job::Update { reference, .. } => transaction
             .add_update(reference, &[], None)
-            .map_err(|err| format!("this cannot be updated: {err}"))?,
+            .map_err(|err| crate::message!("cannot-be-updated", "why" => (err).to_string()))?,
         Job::Remove { reference, .. } => transaction
             .add_uninstall(reference)
-            .map_err(|err| format!("this cannot be removed: {err}"))?,
+            .map_err(|err| crate::message!("cannot-be-removed", "why" => (err).to_string()))?,
         Job::UpdateAll { .. } => {
             let stale = installation
                 .list_installed_refs_for_update(Some(stop))
-                .map_err(|err| format!("what is out of date cannot be read: {err}"))?;
+                .map_err(
+                    |err| crate::message!("out-of-date-cannot-be-read", "why" => (err).to_string()),
+                )?;
             if stale.is_empty() {
-                return Ok("Everything was already up to date.".into());
+                return Ok(crate::i18n::text("was-already-up-to-date").into());
             }
             for one in &stale {
                 if let Some(reference) = one.format_ref() {
@@ -817,11 +828,11 @@ fn run(job: &Job, voice: &Sender<Report>, stop: &Cancellable) -> Result<String, 
             }
         }
         Job::Trim { .. } => {
-            let unused = installation
-                .list_unused_refs(None, Some(stop))
-                .map_err(|err| format!("what nothing needs cannot be worked out: {err}"))?;
+            let unused = installation.list_unused_refs(None, Some(stop)).map_err(
+                |err| crate::message!("left-over-cannot-be-worked-out", "why" => (err).to_string()),
+            )?;
             if unused.is_empty() {
-                return Ok("Nothing was left over.".into());
+                return Ok(crate::i18n::text("nothing-was-left-over").into());
             }
             let mut freed = 0;
             for one in &unused {
@@ -831,7 +842,7 @@ fn run(job: &Job, voice: &Sender<Report>, stop: &Cancellable) -> Result<String, 
                     }
                 }
             }
-            let said = format!("Took back {}.", size(freed));
+            let said = crate::message!("took-back-size", "size" => size(freed));
             let (went, refused) = run_it(&transaction, voice, job, stop)?;
             if !refused.is_empty() {
                 return Err(what_would_not_go(went, &refused));
@@ -870,9 +881,15 @@ fn what_would_not_go(went: usize, refused: &[String]) -> String {
     match (went, refused.len()) {
         (_, 0) => String::new(),
         (0, 1) => first.to_string(),
-        (0, more) => format!("{more} of them would not go. The first: {first}"),
-        (went, 1) => format!("{went} done, one would not go. {first}"),
-        (went, more) => format!("{went} done, {more} would not go. The first: {first}"),
+        (0, more) => {
+            crate::message!("more-would-not-go", "more" => more, "first" => first.to_string())
+        }
+        (went, 1) => {
+            crate::message!("one-would-not-go", "went" => went, "first" => first.to_string())
+        }
+        (went, more) => {
+            crate::message!("some-would-not-go", "went" => went, "more" => more, "first" => first.to_string())
+        }
     }
 }
 
@@ -1007,42 +1024,44 @@ fn repository(
         RepoJob::Enable { name, on } => {
             let remote = installation
                 .remote_by_name(name, Some(stop))
-                .map_err(|err| format!("{name} is not configured here: {err}"))?;
+                .map_err(|err| crate::message!("remote-not-configured", "name" => (name).to_string(), "why" => (err).to_string()))?;
             remote.set_disabled(!on);
             installation
                 .modify_remote(&remote, Some(stop))
-                .map_err(|err| format!("{name} could not be changed: {err}"))?;
+                .map_err(|err| crate::message!("remote-could-not-be-changed", "name" => (name).to_string(), "why" => (err).to_string()))?;
             Ok(if *on {
-                format!("{name} is on again.")
+                crate::message!("remote-is-on-again", "name" => (name).to_string())
             } else {
-                format!("{name} is off. Nothing installed from it was touched.")
+                crate::message!("remote-is-off", "name" => (name).to_string())
             })
         }
         RepoJob::Forget { name } => {
             installation
                 .remove_remote(name, Some(stop))
                 .map_err(|err| {
-                    format!("{name} could not be forgotten: {}", tidy(&err.to_string()))
+                    crate::message!("remote-could-not-be-forgotten", "name" => name.to_string(), "why" => tidy(&err.to_string()))
                 })?;
-            Ok(format!("{name} is gone."))
+            Ok(crate::message!("remote-is-gone", "name" => (name).to_string()))
         }
         RepoJob::Refresh { name } => {
             installation
                 .update_appstream_sync(name, Some(&arch()), Some(stop))
-                .map_err(|err| format!("{name}'s catalogue could not be fetched: {err}"))?;
-            Ok(format!("{name}'s catalogue is up to date."))
+                .map_err(|err| crate::message!("catalogue-could-not-be-fetched", "name" => (name).to_string(), "why" => (err).to_string()))?;
+            Ok(crate::message!("catalogue-is-up-to-date", "name" => (name).to_string()))
         }
         RepoJob::Add { name, url } => {
             let described = describe_repository(url)?;
             let remote = libflatpak::Remote::from_file(name, &glib::Bytes::from_owned(described))
-                .map_err(|err| format!("that is not a repository description: {err}"))?;
+                .map_err(
+                |err| crate::message!("not-a-repository-description", "why" => (err).to_string()),
+            )?;
             // `if_needed` is false on purpose: a name already taken should say
             // so rather than quietly leave the old repository in place.
             installation
                 .add_remote(&remote, false, Some(stop))
-                .map_err(|err| format!("{name} could not be added: {}", tidy(&err.to_string())))?;
+                .map_err(|err| crate::message!("remote-could-not-be-added", "name" => name.to_string(), "why" => tidy(&err.to_string())))?;
             let _ = installation.update_appstream_sync(name, Some(&arch()), Some(stop));
-            Ok(format!("{name} is here, with what it offers."))
+            Ok(crate::message!("remote-is-here", "name" => (name).to_string()))
         }
     }
 }
@@ -1055,7 +1074,7 @@ fn repository(
 /// signature flatpak will trust from that repository ever after.
 fn describe_repository(url: &str) -> Result<Vec<u8>, String> {
     if !url.starts_with("https://") {
-        return Err("A repository has to be described over https.".into());
+        return Err(crate::i18n::text("repository-needs-https").into());
     }
     let agent = ureq::Agent::config_builder()
         .timeout_global(Some(std::time::Duration::from_secs(30)))
@@ -1064,15 +1083,15 @@ fn describe_repository(url: &str) -> Result<Vec<u8>, String> {
     let mut response = agent
         .get(url)
         .call()
-        .map_err(|err| format!("{url} could not be read: {err}"))?;
+        .map_err(|err| crate::message!("url-could-not-be-read", "url" => (url).to_string(), "why" => (err).to_string()))?;
     let described = response
         .body_mut()
         .with_config()
         .limit(64 * 1024)
         .read_to_vec()
-        .map_err(|err| format!("{url} could not be read: {err}"))?;
+        .map_err(|err| crate::message!("url-could-not-be-read", "url" => (url).to_string(), "why" => (err).to_string()))?;
     if described.is_empty() {
-        return Err(format!("{url} is empty."));
+        return Err(crate::message!("url-is-empty", "url" => (url).to_string()));
     }
     Ok(described)
 }
@@ -1096,9 +1115,15 @@ fn describe(operation: &libflatpak::TransactionOperation, doing: &str) -> String
         .unwrap_or_else(|| name.clone());
     match operation.operation_type() {
         libflatpak::TransactionOperationType::Install
-        | libflatpak::TransactionOperationType::InstallBundle => format!("Installing {name}"),
-        libflatpak::TransactionOperationType::Update => format!("Updating {name}"),
-        libflatpak::TransactionOperationType::Uninstall => format!("Removing {name}"),
+        | libflatpak::TransactionOperationType::InstallBundle => {
+            crate::message!("installing-name", "name" => (name).to_string())
+        }
+        libflatpak::TransactionOperationType::Update => {
+            crate::message!("updating-name", "name" => (name).to_string())
+        }
+        libflatpak::TransactionOperationType::Uninstall => {
+            crate::message!("removing-name", "name" => (name).to_string())
+        }
         _ => format!("{doing} {name}"),
     }
 }
@@ -1111,7 +1136,7 @@ fn describe(operation: &libflatpak::TransactionOperation, doing: &str) -> String
 fn tidy(trouble: &str) -> String {
     let lowered = trouble.to_lowercase();
     if lowered.contains("not authorized") || lowered.contains("dismissed") {
-        return "This needed permission, and it was not given.".into();
+        return crate::i18n::text("permission-not-given").into();
     }
     // **"Stopped." is a thing the user did**, and it may not be said about
     // anything else. libflatpak calls a transaction that gave up "aborted"
@@ -1121,16 +1146,16 @@ fn tidy(trouble: &str) -> String {
     // nowhere on the page. See `run_it`, where a failure is now carried past
     // and named instead.
     if lowered.contains("cancel") || lowered.contains("aborted by user") {
-        return "Stopped. What was already fetched is still here.".into();
+        return crate::i18n::text("stopped-what-was-fetched-stays").into();
     }
     if lowered.contains("aborted due to failure") {
-        return "Some of this would not go, and the library did not say which.".into();
+        return crate::i18n::text("some-would-not-go-unnamed").into();
     }
     if lowered.contains("already exists") || lowered.contains("already installed") {
-        return format!("That name is taken on this machine. {trouble}");
+        return crate::message!("name-is-taken", "trouble" => (trouble).to_string());
     }
     if lowered.contains("resolve") || lowered.contains("network") || lowered.contains("connect") {
-        return format!("This machine could not reach the remote. {trouble}");
+        return crate::message!("could-not-reach-the-remote", "trouble" => (trouble).to_string());
     }
     trouble.to_string()
 }
@@ -1210,6 +1235,7 @@ pub fn will_ask(act: Act) -> bool {
 pub struct Known {
     pub name: &'static str,
     pub title: &'static str,
+    /// Catalog message ID for the repository description.
     pub note: &'static str,
     pub url: &'static str,
 }
@@ -1218,25 +1244,25 @@ pub const KNOWN: &[Known] = &[
     Known {
         name: "flathub",
         title: "Flathub",
-        note: "Where nearly every Flatpak application is published",
+        note: "repository-flathub-note",
         url: "https://dl.flathub.org/repo/flathub.flatpakrepo",
     },
     Known {
         name: "flathub-beta",
         title: "Flathub beta",
-        note: "Test builds, published beside the ordinary ones",
+        note: "repository-flathub-beta-note",
         url: "https://dl.flathub.org/beta-repo/flathub-beta.flatpakrepo",
     },
     Known {
         name: "gnome-nightly",
         title: "GNOME Nightly",
-        note: "GNOME's own applications, built every night",
+        note: "repository-gnome-nightly-note",
         url: "https://nightly.gnome.org/gnome-nightly.flatpakrepo",
     },
     Known {
         name: "kdeapps",
         title: "KDE Nightly",
-        note: "KDE's own applications, built every night",
+        note: "repository-kdeapps-note",
         url: "https://distribute.kde.org/kdeapps.flatpakrepo",
     },
 ];
@@ -1443,21 +1469,25 @@ mod tests {
 
     #[test]
     fn the_two_refusals_worth_naming_are_named() {
+        // Said in the session's language, so the sentences are asked of the
+        // catalog rather than written out here; the English and the Polish of
+        // one of them is named in the test below.
         assert_eq!(
             tidy("Error: Not authorized to perform operation"),
-            "This needed permission, and it was not given.",
+            crate::i18n::text("permission-not-given"),
             "a refused password still read as a library error"
         );
+        let reaching = crate::message!("could-not-reach-the-remote", "trouble" => "");
         assert!(
-            tidy("Failed to resolve host dl.flathub.org").contains("could not reach"),
+            tidy("Failed to resolve host dl.flathub.org").starts_with(reaching.trim_end()),
             "no network did not read as no network"
         );
         assert!(
-            tidy("Operation was cancelled").starts_with("Stopped."),
+            tidy("Operation was cancelled").starts_with(crate::i18n::text("stopped")),
             "a job somebody stopped on purpose read as a fault"
         );
         assert!(
-            tidy("Aborted by user").starts_with("Stopped."),
+            tidy("Aborted by user").starts_with(crate::i18n::text("stopped")),
             "a transaction refused before it began read as a fault"
         );
         // **The one that was the bug.** libflatpak says "aborted" whichever
@@ -1466,7 +1496,7 @@ mod tests {
         // real reason nowhere on the page. See `run_it`, where a failed
         // operation is now carried past and named.
         assert!(
-            !tidy("Aborted due to failure").starts_with("Stopped."),
+            !tidy("Aborted due to failure").starts_with(crate::i18n::text("stopped")),
             "an operation that failed still reads as somebody pressing Stop"
         );
         assert_eq!(
@@ -1483,7 +1513,7 @@ mod tests {
             remote: "flathub".into(),
             reference: "app/org.videolan.VLC/x86_64/stable".into(),
         };
-        assert_eq!(job.doing(), "Installing");
+        assert_eq!(job.doing(), crate::i18n::text("installing"));
         assert_eq!(job.about(), "app/org.videolan.VLC/x86_64/stable");
         assert_eq!(job.scope(), Scope::User);
         assert!(job.shown(), "an install would run with no bar at all");
