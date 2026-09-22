@@ -19,6 +19,9 @@ pub use lxb_app::lxb_toolkit::i18n::{Catalog, FluentArgs};
 /// to English on its own.
 pub const RESOURCES: &[(&str, &str)] = &[
     ("en-GB", include_str!("../locales/en-GB.ftl")),
+    // An overlay of what America writes differently, not a second catalog —
+    // see `Catalog::validate`, which holds it to that.
+    ("en-US", include_str!("../locales/en-US.ftl")),
     ("de", include_str!("../locales/de.ftl")),
     ("es", include_str!("../locales/es.ftl")),
     ("fr", include_str!("../locales/fr.ftl")),

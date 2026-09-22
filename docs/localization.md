@@ -1,11 +1,11 @@
 # Languages
 
-Software Hub speaks the ten languages LineXinBar does: **German**, **English**,
-**Spanish**, **French**, **Hindi**, **Polish**, **Brazilian Portuguese**,
-**Russian** and **Simplified Chinese** — nine catalogs, because the two
-Englishes are one file here. All of them are compiled into the binary, and so
-are the faces they are written in: there is nothing to install, no translation
-package, no message directory and no font to find.
+Software Hub speaks the ten languages LineXinBar does: **German**, **English
+(UK)**, **English (US)**, **Spanish**, **French**, **Hindi**, **Polish**,
+**Brazilian Portuguese**, **Russian** and **Simplified Chinese**. All of them
+are compiled into the binary, and so are the faces they are written in: there
+is nothing to install, no translation package, no message directory and no font
+to find.
 
 ## Which language it speaks
 
@@ -36,11 +36,11 @@ the name, not by libc.
 
 * `locales/en-GB.ftl` and the eight translations beside it — everything this
   application says.
-  `en-GB` is the English the toolkit falls back to, and there is no
-  `en-US.ftl`: the two Englishes differ over the order of a date and a handful
-  of spellings, and this application writes neither. An overlay holding nothing
-  would fail `Catalog::validate`, which is the right answer — a file with no
-  difference in it is a file to delete.
+* `locales/en-US.ftl` — an **overlay** of what America writes differently: a
+  date puts its month first, a *catalogue* is a catalog, and nothing is
+  *authorised*. Everything not in it is answered out of `en-GB.ftl`, and
+  `Catalog::validate` fails the file if it ever copies a message across
+  unchanged.
 * `src/i18n.rs` — the catalogs it embeds, and `text` / `message!`.
 * The file question, its menus and the notes under its rows are **the
   toolkit's** words, in `lxb-toolkit`'s own catalogs.
