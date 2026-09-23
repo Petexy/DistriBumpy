@@ -10,18 +10,20 @@ license=('GPL-3.0-only')
 # flatpak is a runtime dependency as well as a build one: this is a front end
 # for libflatpak, and there is nothing for it to do without one.
 #
-# wayland and libxkbcommon are the window and the keyboard: the first is linked
-# outright, the second is opened by name at run time and so is invisible to
-# anything that reads the ELF. libglvnd is the EGL fallback wgpu takes on a
-# machine with no Vulkan driver.
-depends=('flatpak' 'glibc' 'gcc-libs' 'glib2' 'wayland' 'libxkbcommon' 'libglvnd')
+# libxkbcommon, alsa-lib and systemd-libs (libudev) are the keyboard, the
+# interface sounds and the game controllers, all three linked outright. wayland
+# is the window, opened by name at run time and so invisible to anything that
+# reads the ELF. libglvnd is the EGL fallback wgpu takes on a machine with no
+# Vulkan driver.
+depends=('flatpak' 'glibc' 'gcc-libs' 'glib2' 'wayland' 'libxkbcommon' 'libglvnd'
+         'alsa-lib' 'systemd-libs')
 # The toolkit is a *build* dependency and not a runtime one, which is the thing
 # about this package that looks like a mistake and is not. `lxb-app` is a Rust
 # path dependency: cargo compiles those sources into this binary, so what comes
 # out links no liblxb_*.so at all and runs on a machine that has never heard of
 # the toolkit. It is versioned all the same — this is built against one release
 # of the language, not against whichever is lying about.
-makedepends=('cargo' 'lxb-toolkit>=@TOOLKIT_VERSION@')
+makedepends=('cargo' 'pkgconf' 'lxb-toolkit>=@TOOLKIT_VERSION@')
 # The Links page hands an address to whatever this desktop opens addresses
 # with, which is the only thing here that is not done in-process.
 optdepends=("xdg-utils: opening a project's website, help and bug tracker"

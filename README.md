@@ -5,7 +5,7 @@ by a controller. It is shown as *Software Hub*.**
 
 [![Licence](https://img.shields.io/badge/licence-GPL--3.0--only-blue)](LICENSE)
 [![Version](https://img.shields.io/badge/version-0.9.0-informational)](VERSION)
-[![Rust](https://img.shields.io/badge/rust-1.87%2B-orange)](Cargo.toml)
+[![Rust](https://img.shields.io/badge/rust-1.90%2B-orange)](Cargo.toml)
 
 ![The Home page](docs/home.png)
 
@@ -116,7 +116,7 @@ keyboard up for it. Back leaves the field for the shelves.
 
 ## Install
 
-Rust 1.87 or newer, and the **lxb-toolkit development component** —
+Rust 1.90 or newer, and the **lxb-toolkit development component** —
 `Cargo.toml` names its crate sources at `/usr/share/lxb-toolkit/crates`, and
 cargo compiles them into this binary, so nothing of the toolkit is linked at
 run time. Beside that: **flatpak** and **glib** with their development files,

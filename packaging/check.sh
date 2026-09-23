@@ -178,7 +178,7 @@ package_note "it is called '$desktop_name'"
 
 if [[ "$build" == true ]]; then
     package_note "building the release artefact"
-    require_rust_version 1.87
+    require_rust_version 1.90
     require_toolkit_sources
     (cd "$PROJECT_ROOT" && cargo build --locked --release)
 fi

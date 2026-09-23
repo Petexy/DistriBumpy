@@ -70,7 +70,7 @@ fi
 
 require_command makepkg
 require_command sha256sum
-require_rust_version 1.87
+require_rust_version 1.90
 require_toolkit_sources
 
 work="$(package_work_dir distribumpy-arch)"

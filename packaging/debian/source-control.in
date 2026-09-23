@@ -3,11 +3,13 @@ Section: admin
 Priority: optional
 Maintainer: Piotr Lewandowski <piotr.petexy@gmail.com>
 Build-Depends: debhelper-compat (= 13),
-               cargo,
-               rustc (>= 1.87),
+               rustup | cargo (>= 1.90),
                pkg-config,
+               libasound2-dev,
                libflatpak-dev,
                libglib2.0-dev,
+               libudev-dev,
+               libxkbcommon-dev,
                lxb-toolkit-dev (>= @TOOLKIT_VERSION@)
 Standards-Version: 4.7.4
 Rules-Requires-Root: no

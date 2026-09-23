@@ -21,12 +21,18 @@ ExclusiveArch:  x86_64 aarch64
 # so the DWARF is built and packaged rather than built and binned.
 %global debug_package %{nil}
 
-BuildRequires:  cargo >= 1.87
-BuildRequires:  rust >= 1.87
+BuildRequires:  cargo >= 1.90
+BuildRequires:  rust >= 1.90
 BuildRequires:  gcc
 BuildRequires:  pkgconfig
 BuildRequires:  pkgconfig(flatpak)
 BuildRequires:  pkgconfig(glib-2.0)
+# What the program links outright, each asked for as a pkg-config name, which
+# is what the Rust bindings look for: ALSA for the interface sounds, libudev
+# for the game controllers and xkbcommon for the keyboard.
+BuildRequires:  pkgconfig(alsa)
+BuildRequires:  pkgconfig(libudev)
+BuildRequires:  pkgconfig(xkbcommon)
 BuildRequires:  desktop-file-utils
 BuildRequires:  libappstream-glib
 # The design language, as Rust sources. It is a build dependency and not a
@@ -36,8 +42,7 @@ BuildRequires:  lxb-toolkit-devel >= 0.9.0
 
 Requires:       flatpak
 # Opened by name at run time rather than linked, so rpm's automatic dependency
-# generator cannot see either of them in the ELF.
-Requires:       libxkbcommon
+# generator cannot see it in the ELF.
 Requires:       libglvnd-egl
 # The Links page hands an address to whatever this desktop opens addresses
 # with, which is the only thing here not done in-process.

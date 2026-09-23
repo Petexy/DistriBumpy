@@ -143,7 +143,11 @@ its real SHA-256 checksum before running `makepkg`. Artifacts are copied to
 
 ## Debian
 
-Build on Debian, Ubuntu, or another Debian-derived system with `dpkg-dev`:
+Build on Debian, Ubuntu, or another Debian-derived system. The builder checks
+everything it needs before compiling and names whatever is missing in one
+`apt install` line — Rust among it as `rustup`, because Debian 13's own is
+older than the locked graph allows. A distrobox or toolbox container on a plain
+`debian` image is enough:
 
 ```sh
 ./packaging/build.sh debian
@@ -151,6 +155,9 @@ Build on Debian, Ubuntu, or another Debian-derived system with `dpkg-dev`:
 
 The builder uses `dpkg-shlibdeps` on the locally linked binary, stages one
 policy-shaped binary package, and writes it to `packaging/out/debian/`.
+It compiles into `target/debian` rather than `target/` (or into
+`$CARGO_TARGET_DIR` when that is set), so a build in a container that shares
+the checkout never replaces the host's own binaries.
 
 `--allow-foreign-host` exists for package-structure testing only, and says so
 twice: a `.deb` built against another distribution's libc must not be deployed
@@ -164,7 +171,13 @@ shape — which files landed where, and what the package declares.
 
 ## Fedora
 
+Build on Fedora with the RPM tools and what the spec asks for, which
+`dnf builddep` reads from the spec itself — once the toolkit's development
+package is installed, which is not in Fedora's archive either (see below):
+
 ```sh
+sudo dnf install rpm-build dnf5-plugins git-core
+sudo dnf builddep packaging/fedora/distribumpy.spec
 ./packaging/build.sh fedora
 ./packaging/build.sh fedora --no-check
 ```
