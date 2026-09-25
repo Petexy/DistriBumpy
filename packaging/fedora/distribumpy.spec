@@ -1,5 +1,5 @@
 Name:           distribumpy
-Version:        0.9.0
+Version:        0.9.1
 Release:        1%{?dist}
 Summary:        A Flatpak store in the LineXinBar design language, shown as Software Hub
 
@@ -38,7 +38,7 @@ BuildRequires:  libappstream-glib
 # The design language, as Rust sources. It is a build dependency and not a
 # runtime one: `lxb-app` is a path dependency, so cargo compiles it into this
 # binary and the finished program links no liblxb_*.so at all.
-BuildRequires:  lxb-toolkit-devel >= 0.9.0
+BuildRequires:  lxb-toolkit-devel >= 0.9.1
 
 Requires:       flatpak
 # Opened by name at run time rather than linked, so rpm's automatic dependency
@@ -134,6 +134,21 @@ appstream-util validate-relax --nonet \
 %{_metainfodir}/io.github.petexy.distribumpy.metainfo.xml
 
 %changelog
+* Thu Sep 24 2026 Piotr Lewandowski <piotr.petexy@gmail.com> - 0.9.1-1
+- Released with LineXinBar 0.9.1. Ten languages, from the same catalogues the
+  rest of the family speaks, American English included.
+- A page opens out of the card that was pressed and goes back into it, a
+  category opens best rated rather than by name, and the search field steps
+  back, reads and can be clicked.
+- Open starts the branch that is installed rather than flatpak's "master", an
+  install goes to a remote that is switched on rather than to one that only has
+  the name, and a screenshot's caption is cut to one line.
+- The package builds say what they lack before compiling, and no longer compile
+  the debuginfo nothing packages.
+- Requires lxb-toolkit 0.9.1 to build, the version the family releases under.
+  It is what gives the wallpaper the shell's sparkles and Theme > Particles,
+  which lxb-app hands every window without the application asking.
+
 * Sun Aug 30 2026 Piotr Lewandowski <piotr.petexy@gmail.com> - 0.9.0-1
 - LineXinBar, lxb-toolkit, CEDM and this store now release under one version,
   so that what somebody has installed can be read off one number rather than

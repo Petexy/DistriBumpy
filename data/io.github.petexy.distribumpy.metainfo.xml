@@ -94,6 +94,33 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="0.9.1" type="development" date="2026-09-24">
+      <description>
+        <p>
+          Software Hub speaks the language the session speaks, in ten
+          languages.
+        </p>
+        <p>
+          A page opens out of the card that was pressed and goes back
+          into it, a category opens best rated rather than by name,
+          and the search field can be stepped back from and clicked
+          like any other control.
+        </p>
+        <p>
+          Open starts the application that is installed, installing
+          goes to a source that is switched on, and a long caption is
+          cut to the room it has.
+        </p>
+        <p>
+          The background carries the desktop's sparkles, and follows
+          its Particles setting.
+        </p>
+        <p>
+          This release shares its version with LineXinBar,
+          lxb-toolkit, CEDM, Imagonsole, Videonsole and SongOnSole.
+        </p>
+      </description>
+    </release>
     <release version="0.9.0" type="development" date="2026-08-30">
       <description>
         <p>

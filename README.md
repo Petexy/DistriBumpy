@@ -4,7 +4,7 @@
 by a controller. It is shown as *Software Hub*.**
 
 [![Licence](https://img.shields.io/badge/licence-GPL--3.0--only-blue)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.9.0-informational)](VERSION)
+[![Version](https://img.shields.io/badge/version-0.9.1-informational)](VERSION)
 [![Rust](https://img.shields.io/badge/rust-1.90%2B-orange)](Cargo.toml)
 
 ![The Home page](docs/home.png)

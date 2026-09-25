@@ -1,6 +1,6 @@
 [package]
 name = "distribumpy"
-version = "0.9.0"
+version = "0.9.1"
 edition = "2021"
 rust-version = "1.90"
 license = "GPL-3.0-only"
@@ -56,8 +56,11 @@ repository = "https://github.com/Petexy/distribumpy"
 # the greeter and this store were lined up on one version, and the API, the ABI
 # and the payload did not move. It is required rather than 0.3.11 because a
 # caret requirement on a 0.x version pins the minor, so ^0.3.11 does not match
-# 0.9.0 and cargo would refuse the toolkit that is actually installed.
-lxb-app = { version = "0.9.0", path = "/usr/share/lxb-toolkit/crates/lxb-app" }
+# 0.9.0 and cargo would refuse the toolkit that is actually installed. 0.9.1
+# carries the shell's sparkles on the wallpaper and follows Theme > Particles,
+# which lxb-app hands every window; nothing here had to change for it, but a
+# build against 0.9.0 would be the one application in the family without them.
+lxb-app = { version = "0.9.1", path = "/usr/share/lxb-toolkit/crates/lxb-app" }
 
 # Flatpak itself. The bindings over the same libflatpak the `flatpak` command
 # is a front end for, which is what makes a real transaction — resolved
