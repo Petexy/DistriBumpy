@@ -1,5 +1,5 @@
 Name:           distribumpy
-Version:        0.9.1
+Version:        0.9.2
 Release:        1%{?dist}
 Summary:        A Flatpak store in the LineXinBar design language, shown as Software Hub
 
@@ -38,7 +38,7 @@ BuildRequires:  libappstream-glib
 # The design language, as Rust sources. It is a build dependency and not a
 # runtime one: `lxb-app` is a path dependency, so cargo compiles it into this
 # binary and the finished program links no liblxb_*.so at all.
-BuildRequires:  lxb-toolkit-devel >= 0.9.1
+BuildRequires:  lxb-toolkit-devel >= 0.9.2
 
 Requires:       flatpak
 # Opened by name at run time rather than linked, so rpm's automatic dependency
@@ -134,6 +134,13 @@ appstream-util validate-relax --nonet \
 %{_metainfodir}/io.github.petexy.distribumpy.metainfo.xml
 
 %changelog
+* Sun Sep 27 2026 Piotr Lewandowski <piotr.petexy@gmail.com> - 0.9.2-1
+- Released with LineXinBar 0.9.2. A controller that is switched off and on
+  again is read again: the controls it takes from lxb-toolkit are read through
+  lxb-toolkit's copy of GilRs, which no longer leaves the second of two
+  hot-plug events unread.
+- Requires lxb-toolkit 0.9.2 to build, the first to ship that copy.
+
 * Thu Sep 24 2026 Piotr Lewandowski <piotr.petexy@gmail.com> - 0.9.1-1
 - Released with LineXinBar 0.9.1. Ten languages, from the same catalogues the
   rest of the family speaks, American English included.

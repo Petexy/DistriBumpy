@@ -107,6 +107,16 @@ require_toolkit_sources() {
 Cargo compiles them into this binary, so lxb-toolkit $wanted or newer has to be
 installed to build — its devel component on Debian and Fedora, the one package
 on Arch. LXB_TOOLKIT_CRATE_DIR points somewhere else."
+
+    # And the GilRs the toolkit carries, which lxb-input reads every pad
+    # through. A toolkit released before it shipped one has every crate above
+    # and not this one, and Cargo would name only a missing directory — or,
+    # under --locked, a lock file it will not update.
+    [[ -d "$PACKAGE_TOOLKIT_CRATES/lxb-gilrs" ]] || package_die \
+        "the toolkit's copy of GilRs is not at $PACKAGE_TOOLKIT_CRATES/lxb-gilrs.
+It carries the fix for a pad that is turned off and on again, and the toolkit's
+controls read every pad through it, so this needs an lxb-toolkit that ships it.
+LXB_TOOLKIT_CRATE_DIR points somewhere else."
 }
 
 # What Cargo.toml asks of the toolkit, which is the number every package

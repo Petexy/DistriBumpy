@@ -94,6 +94,20 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="0.9.2" type="development" date="2026-09-27">
+      <description>
+        <p>
+          A controller that is switched off and on again is read again.
+          Software Hub reads its pads through a copy of GilRs that no longer
+          misses the second of two controllers changing at once, which
+          is every controller switched off under LineXinBar.
+        </p>
+        <p>
+          This release shares its version with LineXinBar,
+          lxb-toolkit, CEDM, Imagonsole, Videonsole and SongOnSole.
+        </p>
+      </description>
+    </release>
     <release version="0.9.1" type="development" date="2026-09-24">
       <description>
         <p>
