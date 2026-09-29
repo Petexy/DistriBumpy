@@ -15,6 +15,14 @@
   # is built. It is here rather than in nixpkgs because that is where it is —
   # the flake at the root of this checkout is what supplies it.
   lxb-toolkit,
+  # What plays the sounds. Linked outright rather than opened by name, so this
+  # is in `buildInputs` below and the usual RPATH machinery finds it for
+  # itself. cpal's alsa-sys needs alsa.pc on the pkg-config path in the
+  # sandbox.
+  alsa-lib,
+  # The toolkit's GilRs copy reads pads, and its libudev-sys needs libudev.pc
+  # on the pkg-config path in the sandbox.
+  udev,
   src ? ../..,
 }:
 
@@ -60,7 +68,7 @@ rustPlatform.buildRustPackage {
 
   strictDeps = true;
   nativeBuildInputs = [ pkg-config makeWrapper ];
-  buildInputs = [ flatpak glib ] ++ openedAtRuntime;
+  buildInputs = [ flatpak glib alsa-lib udev ] ++ openedAtRuntime;
 
   # Cargo.toml names the toolkit's crates at /usr/share, which is where every
   # other distribution here puts them and is nowhere at all under Nix. This is
@@ -80,12 +88,18 @@ rustPlatform.buildRustPackage {
   installPhase = ''
     runHook preInstall
 
-    # install.sh reads the release directory of a target dir; buildRustPackage
-    # builds under a target triple, so point it at the parent of that.
+    # install.sh reads the release directory of a target dir. The cargo hooks
+    # pass --target, so the real artifacts live under the triple dir; cargo
+    # still creates an empty-ish target/release for check side outputs, so
+    # detect by the binary's presence rather than by directory name or glob
+    # order.
     targetDir="target"
-    if [ ! -d "target/release" ]; then
-      targetDir="$(dirname "$(dirname "$(readlink -f target/*/release)")")"
-    fi
+    for d in target/*/release target/release; do
+      if [ -e "$d/distribumpy" ]; then
+        targetDir="$(dirname "$d")"
+        break
+      fi
+    done
 
     bash packaging/install.sh \
       --destdir "$out" \

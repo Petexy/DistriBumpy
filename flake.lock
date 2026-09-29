@@ -1,0 +1,48 @@
+{
+  "nodes": {
+    "lxb-toolkit": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1790622912,
+        "narHash": "sha256-eGOXXvuEMjZeUGRhr0i16QovI6QtcZdoAk7CcDESyfE=",
+        "owner": "Petexy",
+        "repo": "lxb-toolkit",
+        "rev": "dcd7dedd88f068a1846bfbf5fbe6a05f563e193e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Petexy",
+        "repo": "lxb-toolkit",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1790635395,
+        "narHash": "sha256-bNyvoIyOCu7lzoCpWKWGIsHpTtERUWzqYWFPlN++WTw=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "7fc6f2c20af09cdcaf48b92ec3121860139ec668",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-26.05",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "lxb-toolkit": "lxb-toolkit",
+        "nixpkgs": "nixpkgs"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
