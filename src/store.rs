@@ -650,6 +650,9 @@ pub struct Store {
     opened_row: Option<usize>,
     opened_from: Option<[f32; 4]>,
     pub column: Column,
+    /// The view's slide between the shelves and the listing, on a window too
+    /// narrow for the two side by side. See `draw::beside_the_shelves`.
+    pub slide: lxb_app::lxb_toolkit::layout::Slide,
     pub shelf: usize,
     /// The first shelf drawn in the panel, how many fitted in it, and how
     /// tall one of them is.
@@ -790,6 +793,7 @@ impl Store {
             opened_row: None,
             opened_from: None,
             column: Column::Shelves,
+            slide: lxb_app::lxb_toolkit::layout::Slide::default(),
             shelf: 0,
             shelf_top: 0,
             shelf_room: 1,

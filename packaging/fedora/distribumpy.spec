@@ -1,5 +1,5 @@
 Name:           distribumpy
-Version:        0.9.2
+Version:        0.9.3
 Release:        1%{?dist}
 Summary:        A Flatpak store in the LineXinBar design language, shown as Software Hub
 
@@ -38,7 +38,7 @@ BuildRequires:  libappstream-glib
 # The design language, as Rust sources. It is a build dependency and not a
 # runtime one: `lxb-app` is a path dependency, so cargo compiles it into this
 # binary and the finished program links no liblxb_*.so at all.
-BuildRequires:  lxb-toolkit-devel >= 0.9.2
+BuildRequires:  lxb-toolkit-devel >= 0.9.3
 
 Requires:       flatpak
 # Opened by name at run time rather than linked, so rpm's automatic dependency
@@ -134,6 +134,15 @@ appstream-util validate-relax --nonet \
 %{_metainfodir}/io.github.petexy.distribumpy.metainfo.xml
 
 %changelog
+* Tue Sep 29 2026 Piotr Lewandowski <piotr.petexy@gmail.com> - 0.9.3-1
+- Released with LineXinBar 0.9.3. The machine is kept awake while a package is
+  installed, updated or removed, so the session's new auto-sleep never stops
+  one halfway.
+- Built on lxb-toolkit 0.9.3, the store follows low-end hardware mode, opens on
+  a machine without a Vulkan driver, and lets go of the sound output when
+  quiet.
+- Requires lxb-toolkit 0.9.3 to build.
+
 * Sun Sep 27 2026 Piotr Lewandowski <piotr.petexy@gmail.com> - 0.9.2-1
 - Released with LineXinBar 0.9.2. A controller that is switched off and on
   again is read again: the controls it takes from lxb-toolkit are read through

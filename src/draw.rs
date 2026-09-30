@@ -16,6 +16,7 @@
 //! masked.
 
 use lxb_app::lxb_render::{Align, Fit, Spot, Written};
+use lxb_app::lxb_toolkit::layout::{self, Beside};
 use lxb_app::lxb_toolkit::{
     material::{Overlay, Surface},
     metrics::Metric,
@@ -62,6 +63,18 @@ pub const PICTURE_FADE: f32 = 0.28;
 
 pub fn draw(store: &mut Store, page: &mut Page) {
     let (pane, room) = window(page);
+
+    // The view's slide between the shelves and the listing, on a window too
+    // narrow for the two side by side: over to the listing once the light goes
+    // into it, and back to the shelves once it comes out. See
+    // [`beside_the_shelves`].
+    let (_, laid) = beside_the_shelves(page, room);
+    store
+        .slide
+        .follow(laid.target(store.column != Column::Shelves), store.anim.dt);
+    if store.slide.moving() {
+        page.redraw_within(std::time::Duration::from_millis(16));
+    }
 
     if store.opening() {
         lay_the_window(page, pane);
@@ -213,10 +226,13 @@ fn one_page(store: &mut Store, page: &mut Page, room: [f32; 4], screen: &Screen)
     // foot is only as wide as the listing beside it: the sidebar runs the
     // whole height of the window, and the legend is written to the right of
     // it. Everywhere else the foot has the width of the page.
-    let split = matches!(screen, Screen::Browse).then(|| split_the_page(page, room));
+    let split = matches!(screen, Screen::Browse).then(|| split_the_page(store, page, room));
+    // On a window where the shelves and the listing slide, neither of them is
+    // always in view, so the foot is the page's whole width there — the way it
+    // is on every other page — and the panel stops above it with the listing.
     let foot = match &split {
-        Some((_, listing)) => *listing,
-        None => room,
+        Some((_, listing, false)) => *listing,
+        _ => room,
     };
     // Where the foot of the page begins is worked out now and drawn at the
     // end. The two meet: a row leaving the bottom of the listing is drawn as
@@ -226,13 +242,18 @@ fn one_page(store: &mut Store, page: &mut Page, room: [f32; 4], screen: &Screen)
 
     match screen {
         Screen::Browse => {
-            let (panel, listing) = split.unwrap_or((room, room));
+            let (panel, listing, slides) = split.unwrap_or((room, room, false));
             let listing = [
                 listing[0],
                 listing[1],
                 listing[2],
                 (below - listing[1]).max(0.0),
             ];
+            let panel = if slides {
+                [panel[0], panel[1], panel[2], (below - panel[1]).max(0.0)]
+            } else {
+                panel
+            };
             browse(store, page, panel, listing);
         }
         Screen::Detail { id } => {
@@ -264,28 +285,41 @@ fn foot_top(store: &Store, page: &mut Page, room: [f32; 4]) -> f32 {
     bottom - tall - gap
 }
 
-/// Where the panel of shelves stands, and what is left for the listing.
+/// The narrowest the listing beside the panel can be and still be the listing,
+/// in reference pixels. Every landscape window has more; a window standing on
+/// its side does not, and there the view slides between the panel and the
+/// listing rather than squeezing either into the width. See
+/// [`beside_the_shelves`].
+const LISTING_LEAST: f32 = 560.0;
+
+/// How wide the panel of shelves is, and where the listing stands beside it.
 ///
-/// Worked out before anything is drawn, because the foot of the page needs it
-/// too: what runs along the bottom belongs to the listing, not to the panel.
-fn split_the_page(page: &mut Page, room: [f32; 4]) -> ([f32; 4], [f32; 4]) {
-    // **Every margin on this page is the same margin.** The panel stands one
-    // in from the left, the listing ends one in from the right, and this is
-    // the space between the two. The toolkit's `ColumnSpacing` is the XMB's —
-    // two hundred points, five times the page's own margin — and between a
-    // panel and a grid it reads as a hole somebody forgot to fill rather than
-    // as a margin.
+/// **Every margin on this page is the same margin.** The panel stands one in
+/// from the left, the listing ends one in from the right, and the space
+/// between the two is the page's own padding. The toolkit's `ColumnSpacing` is
+/// the XMB's — two hundred points, five times the page's own margin — and
+/// between a panel and a grid it reads as a hole somebody forgot to fill rather
+/// than as a margin.
+///
+/// The panel is wide enough for the longest shelf name and its count side by
+/// side. Narrower than that and Repositories is drawn as Repositori…, which
+/// reads as a fault; wider and it is taking room from the grid for nothing.
+/// Measured rather than fixed, because "the longest shelf name" is a different
+/// length in every language: 348 was the room English wants, and Polish says
+/// Zainstalowane where English says Installed. The panel asks the font how wide
+/// the names it is about to draw really are and takes that much — so English
+/// is drawn exactly as it was, and no language is drawn with its shelves cut.
+///
+/// Where the listing still has [`LISTING_LEAST`] beside it, the panel is held
+/// to a third of the page as it always was and nothing slides: every window
+/// that was laid out side by side is laid out exactly as before. Where it has
+/// not — a window standing on its side, sized as everything here is by its
+/// height — the panel keeps its width, the listing is laid out past the
+/// right-hand edge, and [`Beside::reach`] is how far the view slides to it:
+/// the toolkit's `layout::beside`, which is LineXinBar's Home menu's own rule
+/// between its column and its cards.
+fn beside_the_shelves(page: &mut Page, room: [f32; 4]) -> (f32, Beside) {
     let gap = page.metric(Metric::PanelPadding);
-    // Wide enough for the longest shelf name and its count side by side.
-    // Narrower than that and Repositories is drawn as Repositori…, which reads
-    // as a fault; wider and it is taking room from the grid for nothing.
-    //
-    // Measured rather than fixed, because "the longest shelf name" is a
-    // different length in every language: 348 was the room English wants, and
-    // Polish says Zainstalowane where English says Installed. The panel asks
-    // the font how wide the names it is about to draw really are and takes
-    // that much, inside the same bounds as before — so English is drawn
-    // exactly as it was, and no language is drawn with its shelves cut.
     let names = crate::store::shelves()
         .into_iter()
         .map(|shelf| page.measure(Text::Body, shelf.short_title()))
@@ -297,19 +331,36 @@ fn split_the_page(page: &mut Page, room: [f32; 4]) -> ([f32; 4], [f32; 4]) {
     let pad = page.metric(Metric::RowPadding) * 0.7;
     let tally = page.measure(Text::Caption, "888") + pad * 1.6;
     let wanted = names + mark + tally + pad * 2.6 + page.metric(Metric::PanelPadding);
-    let width = page
-        .scaled(348.0)
-        .max(wanted)
-        .min(room[2] * 0.32)
-        .max(page.scaled(150.0));
+    let full = page.scaled(348.0).max(wanted);
+    let least = page.scaled(LISTING_LEAST);
+    let capped = full.min(room[2] * 0.32).max(page.scaled(150.0));
+    if room[2] - capped - gap >= least {
+        return (
+            capped,
+            Beside {
+                page_x: capped + gap,
+                page_w: (room[2] - capped - gap).max(page.scaled(120.0)),
+                reach: 0.0,
+            },
+        );
+    }
+    (full, layout::beside(room[2], 0.0, full, gap, least))
+}
+
+/// Where the panel of shelves stands, where the listing stands, and whether the
+/// two slide — each already slid as far as the view has got.
+///
+/// Worked out before anything is drawn, because the foot of the page needs it
+/// too: what runs along the bottom belongs to the listing, not to the panel,
+/// wherever the two stand side by side.
+fn split_the_page(store: &Store, page: &mut Page, room: [f32; 4]) -> ([f32; 4], [f32; 4], bool) {
+    let (width, laid) = beside_the_shelves(page, room);
+    let pan = store.slide.at.clamp(0.0, laid.reach);
+    let x = room[0] - pan;
     (
-        [room[0], room[1], width, room[3]],
-        [
-            room[0] + width + gap,
-            room[1],
-            (room[2] - width - gap).max(page.scaled(120.0)),
-            room[3],
-        ],
+        [x, room[1], width, room[3]],
+        [x + laid.page_x, room[1], laid.page_w, room[3]],
+        laid.slides(),
     )
 }
 
@@ -1157,10 +1208,33 @@ fn card_height(page: &Page) -> f32 {
 fn hero_height(page: &Page, width: f32) -> f32 {
     let row = page.metric(Metric::RowHeight);
     if width >= page.scaled(HERO_SPLIT_AT) {
-        (width * 0.27).clamp(row * 3.1, row * 4.2)
-    } else {
-        (width * 0.70).clamp(row * 4.2, row * 5.8)
+        return (width * 0.27).clamp(row * 3.1, row * 4.2);
     }
+    // The vertical story, measured from what it holds rather than from its
+    // width: sized by its width alone it was shorter than its own words at the
+    // width a window standing on its side gives the listing, and the summary
+    // was written over the heading under the card.
+    let (picture, words) = hero_story(page, width);
+    let pad = page.metric(Metric::RowPadding);
+    let gap = page.metric(Metric::Gap) * 0.65;
+    pad * 2.0 + picture + gap + words
+}
+
+/// The vertical story's two parts: how tall its picture is, across the top,
+/// and how tall the lines under it are — the eyebrow, the name, the publisher
+/// and two lines of what it is. One sum, read by [`hero_height`] to size the
+/// card and by [`draw_hero`] to lay it out, so the two cannot disagree about
+/// where the words end.
+fn hero_story(page: &Page, width: f32) -> (f32, f32) {
+    let row = page.metric(Metric::RowHeight);
+    let pad = page.metric(Metric::RowPadding);
+    let gap = page.metric(Metric::Gap) * 0.65;
+    let picture = ((width - pad * 2.0) * 0.5).clamp(row * 2.0, row * 3.4);
+    let words = page.line(Text::Caption) * 2.0
+        + page.line(Text::Display)
+        + page.line(Text::Body) * 2.0
+        + gap * 0.75;
+    (picture, words)
 }
 
 /// At this width the hero changes from a vertical story to screenshot beside
@@ -1694,7 +1768,7 @@ fn draw_hero(store: &mut Store, page: &mut Page, row: &Row, rect: [f32; 4], fade
             ],
         )
     } else {
-        let picture_height = rect[3] * 0.50;
+        let picture_height = hero_story(page, rect[2]).0;
         (
             [
                 rect[0] + pad,

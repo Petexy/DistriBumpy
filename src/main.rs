@@ -51,6 +51,20 @@ fn main() -> Result<(), String> {
 fn frame(store: &mut store::Store, page: &mut lxb_app::Page) {
     let seconds = page.seconds();
     store.advance();
+    // An install, an update or a removal is work a sleep would stop halfway,
+    // and nobody touching the machine while it runs is nobody having left:
+    // the session is told to keep the machine awake until it ends, and — in
+    // low-end hardware mode, where a still window is drawn once a second — its
+    // bar is drawn four times a second.
+    let working = store.running.is_some();
+    page.keep_awake(if working {
+        lxb_app::Hold::SLEEP
+    } else {
+        lxb_app::Hold::NOTHING
+    });
+    if working {
+        page.redraw_within(std::time::Duration::from_millis(250));
+    }
     store.animate(seconds);
     store.take_typing(page);
     store.take_answer(page);

@@ -9,6 +9,13 @@
   libxkbcommon,
   libGL,
   vulkan-loader,
+  # The interface sounds and the game controllers, both linked outright:
+  # lxb-app's sounds reach ALSA through cpal's alsa-sys, and the toolkit's
+  # GilRs fork reaches libudev through libudev-sys. Both are pkg-config build
+  # scripts, so without them the build stops there. The other recipes name
+  # them already; Arch as alsa-lib and systemd-libs.
+  alsa-lib,
+  udev,
   # The design language, as a derivation. It is a *build* dependency and not a
   # runtime one: `lxb-app` is a Rust path dependency, so cargo compiles those
   # sources into this binary and nothing of the toolkit is referenced once it
@@ -60,7 +67,7 @@ rustPlatform.buildRustPackage {
 
   strictDeps = true;
   nativeBuildInputs = [ pkg-config makeWrapper ];
-  buildInputs = [ flatpak glib ] ++ openedAtRuntime;
+  buildInputs = [ flatpak glib alsa-lib udev ] ++ openedAtRuntime;
 
   # Cargo.toml names the toolkit's crates at /usr/share, which is where every
   # other distribution here puts them and is nowhere at all under Nix. This is
@@ -80,12 +87,18 @@ rustPlatform.buildRustPackage {
   installPhase = ''
     runHook preInstall
 
-    # install.sh reads the release directory of a target dir; buildRustPackage
-    # builds under a target triple, so point it at the parent of that.
+    # install.sh reads the release directory of a target dir. The cargo hooks
+    # build with --target, so the binary is in target/<triple>/release;
+    # target/release exists as well, holding the build scripts cargo ran for
+    # the host, so the target dir is whichever one the binary is in rather
+    # than whichever one exists.
     targetDir="target"
-    if [ ! -d "target/release" ]; then
-      targetDir="$(dirname "$(dirname "$(readlink -f target/*/release)")")"
-    fi
+    for d in target/*/release target/release; do
+      if [ -e "$d/distribumpy" ]; then
+        targetDir="$(dirname "$d")"
+        break
+      fi
+    done
 
     bash packaging/install.sh \
       --destdir "$out" \

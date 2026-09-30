@@ -28,6 +28,20 @@ a field has the cursor — and under LineXinBar that is what brings the on-scree
 keyboard up for it. Back leaves the field for the shelves. A store whose search
 needed a second press to start typing would be a store nobody searches.
 
+On a window standing on its side, sized as everything here is by its height,
+there is no room for the panel and the listing side by side. The panel keeps
+the width its shelf names need, rather than a third of the page with every name
+cut to an ellipsis, and the whole view slides between the two with the light,
+the way LineXinBar's Home menu slides between its column and its cards: the
+shelves whole with the listing peeking in at the right while the light is on a
+shelf, and the listing whole with a strip of the shelves at the left while it
+is in the listing. The row of button hints is the page's whole width there, as
+it is on every other page. The toolkit's `layout::beside` and `layout::Slide`
+do the arithmetic and the moving. A window with room for both is laid out
+exactly as before. The featured card's narrow form, the picture above its
+words, is measured from the lines it holds, so it is never shorter than what is
+written in it.
+
 ## A list that dissolves at its ends
 
 Over the last card and a bit, its cards and their words grow blurrier and more
